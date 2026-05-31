@@ -6,6 +6,8 @@ import { useAuth } from "@/store/auth-context"
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard" },
+  { href: "/trips", label: "Trips" },
+  { href: "/trips/schedule", label: "Schedule Trip" },
   { href: "/driver", label: "Driver" },
   { href: "/parent", label: "Parent" },
   { href: "/student", label: "Student" },
