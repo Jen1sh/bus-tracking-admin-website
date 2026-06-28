@@ -1,15 +1,11 @@
 import type { Metadata } from "next"
-import { Geist, Geist_Mono } from "next/font/google"
-import { AuthProvider } from "@/store/auth-context"
+import { Providers } from "./providers"
 import "./globals.css"
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-})
+import { Inter } from "next/font/google"
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
 })
 
@@ -26,11 +22,11 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      data-theme="winter"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      data-theme="bustrack"
+      className={`${inter.variable} h-full antialiased`}
     >
       <body className="min-h-full">
-        <AuthProvider>{children}</AuthProvider>
+        <Providers>{children}</Providers>
       </body>
     </html>
   )

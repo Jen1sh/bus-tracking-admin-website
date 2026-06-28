@@ -1,4 +1,5 @@
-export const AUTH_ENDPOINTS = {
-  LOGIN: "/api/v1/auth/login",
-  LOGOUT: "/api/v1/auth/logout",
-} as const
+export const API_ENDPOINTS = {
+  LOGIN: "/auth/login",
+  LOGOUT: "/auth/logout",
+  REFRESH: "/auth/refresh",
+} as const;

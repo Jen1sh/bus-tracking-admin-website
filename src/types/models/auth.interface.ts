@@ -1,0 +1,8 @@
+export interface User {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  schoolId: number | null;
+  status: "ACTIVE" | "INACTIVE";
+}

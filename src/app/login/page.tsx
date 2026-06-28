@@ -1,15 +1,31 @@
 "use client"
 
-import { useRouter } from "next/navigation"
-import { useAuth } from "@/store/auth-context"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { z } from "zod"
+import useAuth from "@/hooks/use-auth"
+
+const loginSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(1, "Password is required"),
+})
+
+type LoginFormValues = z.infer<typeof loginSchema>
 
 export default function LoginPage() {
-  const { login } = useAuth()
-  const router = useRouter()
+  const { useLogin } = useAuth()
+  const loginMutation = useLogin()
 
-  const handleLogin = async () => {
-    await login()
-    router.replace("/dashboard")
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+  })
+
+  const onSubmit = (data: LoginFormValues) => {
+    loginMutation.mutate(data)
   }
 
   return (
@@ -25,9 +41,60 @@ export default function LoginPage() {
             <p className="mt-1 text-sm text-base-content/60">Admin Portal</p>
           </div>
 
-          <button onClick={handleLogin} className="btn btn-primary btn-wide mt-2">
-            Login as Admin
-          </button>
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="flex w-full flex-col gap-4"
+          >
+            <label className="form-control w-full">
+              <div className="label">
+                <span className="label-text">Email</span>
+              </div>
+              <input
+                {...register("email")}
+                type="email"
+                placeholder="admin@example.com"
+                className="input input-bordered w-full"
+              />
+              {errors.email && (
+                <div className="label">
+                  <span className="label-text-alt text-error">
+                    {errors.email.message}
+                  </span>
+                </div>
+              )}
+            </label>
+
+            <label className="form-control w-full">
+              <div className="label">
+                <span className="label-text">Password</span>
+              </div>
+              <input
+                {...register("password")}
+                type="password"
+                placeholder="Enter password"
+                className="input input-bordered w-full"
+              />
+              {errors.password && (
+                <div className="label">
+                  <span className="label-text-alt text-error">
+                    {errors.password.message}
+                  </span>
+                </div>
+              )}
+            </label>
+
+            <button
+              type="submit"
+              className="btn btn-primary w-full mt-2"
+              disabled={loginMutation.isPending}
+            >
+              {loginMutation.isPending ? (
+                <span className="loading loading-spinner loading-sm" />
+              ) : (
+                "Login"
+              )}
+            </button>
+          </form>
         </div>
       </div>
     </div>

@@ -2,7 +2,6 @@
 
 import { createContext, useContext, useCallback, useSyncExternalStore, type ReactNode } from "react"
 import type { User } from "@/types/models/user"
-import { loginUser, logoutUser } from "@/services/auth-service"
 
 interface AuthState {
   user: User
@@ -13,7 +12,6 @@ interface AuthContextValue {
   user: User | null
   token: string | null
   isAuthenticated: boolean
-  login: () => Promise<void>
   logout: () => Promise<void>
 }
 
@@ -48,22 +46,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const token = snapshot?.token ?? null
   const user = snapshot?.user ?? null
 
-  const login = useCallback(async () => {
-    const result = await loginUser()
-    localStorage.setItem("auth_token", result.token)
-    localStorage.setItem("auth_user", JSON.stringify(result.user))
-    window.dispatchEvent(new StorageEvent("storage"))
-  }, [])
-
   const logout = useCallback(async () => {
-    await logoutUser()
     localStorage.removeItem("auth_token")
     localStorage.removeItem("auth_user")
     window.dispatchEvent(new StorageEvent("storage"))
   }, [])
 
   return (
-    <AuthContext.Provider value={{ user, token, isAuthenticated: !!token, login, logout }}>
+    <AuthContext.Provider value={{ user, token, isAuthenticated: !!token, logout }}>
       {children}
     </AuthContext.Provider>
   )
