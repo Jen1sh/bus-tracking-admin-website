@@ -1,4 +1,5 @@
 import { Role, AccountStatus } from "@/types/enums";
+import { StudentResponse } from './student';
 
 // ─── Auth ────────────────────────────────────────────────────────────────────
 
@@ -74,24 +75,7 @@ export interface BusSummaryResponse {
   status: string;
 }
 
-export interface RouteResponse {
-  id: number;
-  code: string;
-  name: string;
-  busId: number | null;
-  busCapacity: number | null;
-  stopCount: number;
-}
-
 // ─── Admin Bus Management ────────────────────────────────────────────────────
-
-export interface StudentResponse {
-  id: number;
-  name: string;
-  klass: string | null;
-  stop: string | null;
-  guardianPhone: string | null;
-}
 
 export interface BusDetailResponse {
   id: number;
@@ -129,13 +113,6 @@ export interface PlateChangeAuthorizeResponse {
 export interface PlateUpdateRequest {
   newPlate: string;
   unlockToken: string;
-}
-
-export interface StudentRequest {
-  name: string;
-  klass?: string | null;
-  stop?: string | null;
-  guardianPhone?: string | null;
 }
 
 // ─── Admin Fleet Import ──────────────────────────────────────────────────────
