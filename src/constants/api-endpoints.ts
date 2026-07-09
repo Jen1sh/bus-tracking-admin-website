@@ -16,7 +16,7 @@ export const API_ENDPOINTS = {
   BUS_MANAGEMENT: {
     BASE: "admin/bus-management",
     BY_ID: (id: string) => `admin/bus-management/${id}`,
-    UNASSIGNED_BUSES: "admin/unassigned-buses",
-    UNASSIGNED_USERS: "admin/unassgined-users",
+    UNASSIGNED_BUSES: "admin/bus-management/unassigned-buses",
+    UNASSIGNED_USERS: "admin/bus-management/unassigned-users",
   },
 } as const;

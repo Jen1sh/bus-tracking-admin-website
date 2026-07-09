@@ -196,6 +196,85 @@ If the user's prompt is ambiguous or missing information, the agent must be desi
 
 ---
 
+---
+
+## 11. Data Fetching with React Query
+
+All server-state data fetching uses `@tanstack/react-query`. No `useEffect` for data fetching.
+
+### Pattern: Domain hooks returning named query hooks
+
+Each domain (auth, bus, driver, bus-management) has a hook file that returns named inner hooks. Callers destructure what they need.
+
+```typescript
+// hooks/use-bus.ts
+const useBus = () => {
+  const useBusList = (params: BusListParams) =>
+    useQuery({ queryKey: ["buses", params], queryFn: () => listBuses(params) })
+
+  const useBusDetail = (id?: string) =>
+    useQuery({
+      queryKey: ["bus", id ?? "none"],
+      queryFn: () => getBusById(id!),
+      enabled: !!id,
+    })
+
+  return { useBusList, useBusDetail }
+}
+```
+
+### Usage in pages
+
+```typescript
+const { useBusList } = useBus()
+const { data, isLoading, error } = useBusList(params)
+```
+
+- Use `isLoading`, `isError`, `error` from React Query — no manual state.
+- Avoid client-side `filteredBuses` patterns; send filters to the API.
+
+### Paginated lists → `useInfiniteQuery`
+
+```typescript
+const useDrivers = (params) =>
+  useInfiniteQuery({
+    queryKey: ["drivers", params],
+    queryFn: ({ pageParam }) => listDrivers({ ...params, page: pageParam }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) =>
+      lastPage.page < lastPage.totalPages ? lastPage.page + 1 : undefined,
+  })
+```
+
+Render with `fetchNextPage()` + "Load More" button. Flatten pages: `data.pages.flatMap(p => p.items)`.
+
+### Mutations → `useMutation` + `invalidateQueries` + `toast`
+
+```typescript
+const useCreateAssignment = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data: BusDriverAssignmentRequest) => addBusManagement(data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["bus-assignments"] })
+      toast.success("Assignment created")
+    },
+    onError: () => toast.error("Failed to create assignment"),
+  })
+}
+```
+
+- Always invalidate related queries after mutation success.
+- Use `toast.success` / `toast.error` from `sonner` (matching `use-auth.ts`).
+- `enabled: false` + `.refetch()` for lazy queries (e.g. unassigned lists in a modal).
+
+### Query key conventions
+
+- `["entity"]` — list of all entities
+- `["entity", id]` — single entity by id
+- `["entity", { ...params }]` — filtered list
+- `["entity", "summary"]` — derived/summary data
+
 ## Need Help?
 
 If you find that this architecture prevents you from solving a specific problem, or if you identify a bottleneck, please **open an issue or start a discussion** on our repository.

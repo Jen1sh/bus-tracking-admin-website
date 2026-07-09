@@ -1,56 +1,68 @@
-import { notFound } from "next/navigation"
+"use client"
+
+import { useParams } from "next/navigation"
 import Link from "next/link"
+import { useQuery } from "@tanstack/react-query"
 import { StatusBadge } from "@/components/status-badge"
+import { getBusById } from "@/services/bus-service"
+import useDriver from "@/hooks/use-driver"
 
-const drivers = [
-  { id: "1", name: "John Doe", email: "john@example.com", phone: "+1 555-0101", status: "on-duty", bus: "Bus #12", schedule: "6:30 AM — 9:30 AM", address: "123 Main St, Boston, MA", license: "DL-8294", joinDate: "Jan 2024" },
-  { id: "2", name: "Jane Smith", email: "jane@example.com", phone: "+1 555-0102", status: "on-duty", bus: "Bus #08", schedule: "6:45 AM — 9:45 AM", address: "456 Oak Ave, Boston, MA", license: "DL-7351", joinDate: "Mar 2023" },
-  { id: "3", name: "Mike Johnson", email: "mike@example.com", phone: "+1 555-0103", status: "off-duty", bus: "Bus #15", schedule: "—", address: "789 Pine St, Boston, MA", license: "DL-6128", joinDate: "Aug 2024" },
-  { id: "4", name: "Sarah Lee", email: "sarah@example.com", phone: "+1 555-0104", status: "on-duty", bus: "Bus #03", schedule: "7:00 AM — 10:00 AM", address: "321 Elm St, Boston, MA", license: "DL-4473", joinDate: "Nov 2022" },
-  { id: "5", name: "Tom Brown", email: "tom@example.com", phone: "+1 555-0105", status: "on-leave", bus: "—", schedule: "—", address: "654 River Rd, Boston, MA", license: "DL-5590", joinDate: "Jun 2023" },
-  { id: "6", name: "Emily Davis", email: "emily@example.com", phone: "+1 555-0106", status: "on-duty", bus: "Bus #07", schedule: "6:30 AM — 9:30 AM", address: "987 Cedar Ln, Boston, MA", license: "DL-2217", joinDate: "Feb 2025" },
-  { id: "7", name: "Robert Wilson", email: "robert@example.com", phone: "+1 555-0107", status: "inactive", bus: "—", schedule: "—", address: "147 Birch St, Boston, MA", license: "DL-8836", joinDate: "Oct 2023" },
-  { id: "8", name: "Lisa Chen", email: "lisa@example.com", phone: "+1 555-0108", status: "on-duty", bus: "Bus #05", schedule: "7:15 AM — 10:15 AM", address: "258 Maple Ave, Boston, MA", license: "DL-3349", joinDate: "Apr 2024" },
-]
-
-const students = [
-  { name: "Alice Chen", grade: "5th", bus: "Bus #12", parent: "Robert Chen", status: "active" },
-  { name: "Ben Chen", grade: "3rd", bus: "Bus #12", parent: "Robert Chen", status: "active" },
-  { name: "Sofia Garcia", grade: "2nd", bus: "Bus #08", parent: "Maria Garcia", status: "active" },
-  { name: "Ethan Kim", grade: "6th", bus: "Bus #15", parent: "David Kim", status: "active" },
-  { name: "Luna Kim", grade: "4th", bus: "Bus #15", parent: "David Kim", status: "inactive" },
-  { name: "Noah Thompson", grade: "1st", bus: "Bus #03", parent: "Lisa Thompson", status: "active" },
-]
-
-const routeMap: Record<string, string> = {
-  "Bus #12": "Route 5 — Maple St Station → Central Depot",
-  "Bus #08": "Route 3 — Oak Ave Hub → Pine St Terminal",
-  "Bus #15": "Route 2 — Central Depot → River Rd Station",
-  "Bus #03": "Route 1 — Pine St Terminal → Elm St Stop",
-  "Bus #07": "Route 4 — Elm St Stop → Oak Ave Hub",
-  "Bus #05": "Route 6 — River Rd Station → Maple St Station",
+const statusMap: Record<string, string> = {
+  ACTIVE: "active",
+  SUSPENDED: "inactive",
+  PENDING_VERIFICATION: "inactive",
 }
 
-const weekDays = [
-  { label: "Mon 6/22", date: "Jun 22, 2026" },
-  { label: "Tue 6/23", date: "Jun 23, 2026" },
-  { label: "Wed 6/24", date: "Jun 24, 2026" },
-  { label: "Thu 6/25", date: "Jun 25, 2026" },
-  { label: "Fri 6/26", date: "Jun 26, 2026" },
-]
+export default function DriverDetailPage() {
+  const { id } = useParams<{ id: string }>()
+  const { useDriverDetail, useBusAssignments } = useDriver()
 
-export function generateStaticParams() {
-  return drivers.map((d) => ({ id: d.id }))
-}
+  const { data: driverRes, isLoading: driverLoading, error: driverError } = useDriverDetail(id)
+  const { data: mgmtRes } = useBusAssignments()
 
-export default async function DriverDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
-  const driver = drivers.find((d) => d.id === id)
-  if (!driver) notFound()
+  const driver = driverRes?.data ?? null
+  const assignments = mgmtRes?.data ?? []
+  const assignment = assignments.find((a) => a.userId === driver?.id)
+  const busId = assignment?.busId ? String(assignment.busId) : undefined
 
-  const assignedStudents = students.filter((s) => s.bus === driver.bus)
-  const route = routeMap[driver.bus]
-  const hasSchedule = driver.schedule !== "—"
+  const { data: busRes } = useQuery({
+    queryKey: ["bus", busId],
+    queryFn: () => getBusById(busId!),
+    enabled: !!busId,
+  })
+
+  const bus = busRes?.data ?? null
+
+  if (driverLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <span className="loading loading-spinner loading-md text-primary" />
+      </div>
+    )
+  }
+
+  if (driverError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 gap-3">
+        <span className="text-sm text-base-content/40">{(driverError as Error)?.message ?? "Failed to load driver"}</span>
+        <div className="flex gap-2">
+          <Link href="/driver" className="btn btn-ghost btn-sm">Back to Drivers</Link>
+          <button className="btn btn-primary btn-sm" onClick={() => window.location.reload()}>Retry</button>
+        </div>
+      </div>
+    )
+  }
+
+  if (!driver) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 gap-3">
+        <span className="text-sm text-base-content/40">Driver not found</span>
+        <Link href="/driver" className="btn btn-ghost btn-sm">Back to Drivers</Link>
+      </div>
+    )
+  }
+
+  const effectiveStatus = statusMap[driver.accountStatus] ?? "inactive"
 
   return (
     <div className="space-y-6">
@@ -61,24 +73,20 @@ export default async function DriverDetailPage({ params }: { params: Promise<{ i
         Back to Drivers
       </Link>
 
-      <div className="rounded-box bg-base-100 p-4 shadow-float">
+      <div className="rounded-box bg-base-100 p-4 shadow-card">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
               <h1 className="t-h1">{driver.name}</h1>
-              <StatusBadge status={driver.status} />
+              <StatusBadge status={effectiveStatus} />
             </div>
-            {route ? (
-              <p className="t-body text-base-content/50 mt-0.5">{driver.bus} &middot; {route}</p>
-            ) : (
-              <p className="t-body text-base-content/50 mt-0.5">{driver.bus !== "—" ? driver.bus : "No bus assigned"}</p>
-            )}
+            <p className="t-body text-base-content/50 mt-0.5">{driver.email}</p>
           </div>
         </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="rounded-box bg-base-100 p-3 shadow-float">
+        <div className="rounded-box bg-base-100 p-3 shadow-card">
           <h2 className="t-label font-semibold mb-2">Personal Info</h2>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
@@ -87,120 +95,56 @@ export default async function DriverDetailPage({ params }: { params: Promise<{ i
             </div>
             <div className="flex justify-between">
               <span className="text-base-content/40">Phone</span>
-              <span className="text-base-content">{driver.phone}</span>
+              <span className="text-base-content">{driver.phone ?? "—"}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-base-content/40">Address</span>
-              <span className="text-base-content text-right max-w-56">{driver.address}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-base-content/40">License</span>
-              <span className="text-base-content">{driver.license}</span>
+              <span className="text-base-content/40">Role</span>
+              <span className="text-base-content">{driver.role}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-base-content/40">Joined</span>
-              <span className="text-base-content">{driver.joinDate}</span>
+              <span className="text-base-content">{new Date(driver.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}</span>
             </div>
           </div>
         </div>
 
-        <div className="rounded-box bg-base-100 p-3 shadow-float">
+        <div className="rounded-box bg-base-100 p-3 shadow-card">
           <h2 className="t-label font-semibold mb-2">Bus Assignment</h2>
-          {driver.bus !== "—" ? (
+          {bus ? (
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-base-content/40">Vehicle</span>
-                <span className="text-base-content font-medium">{driver.bus}</span>
+                <Link href={`/bus/${bus.id}`} className="text-primary font-medium link link-hover">{bus.displayId}</Link>
               </div>
               <div className="flex justify-between">
-                <span className="text-base-content/40">Route</span>
-                <span className="text-base-content text-right max-w-56">{route}</span>
+                <span className="text-base-content/40">Plate</span>
+                <span className="text-base-content font-mono">{bus.plate}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-base-content/40">Capacity</span>
-                <span className="text-base-content">48</span>
+                <span className="text-base-content">{bus.capacity ?? "—"}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-base-content/40">Status</span>
-                <StatusBadge status={driver.status} />
+                <span className="text-base-content/40">Route</span>
+                <span className="text-base-content text-right max-w-56">{bus.routeName ?? "—"}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-base-content/40">Shift</span>
-                <span className="text-base-content">{driver.schedule}</span>
+                <span className="text-base-content">{bus.shift ?? "—"}</span>
               </div>
             </div>
           ) : (
             <p className="text-sm text-base-content/40 py-4 text-center">No bus currently assigned.</p>
           )}
+          <div className="mt-3 pt-3 border-t border-base-200">
+            <Link href="/bus/manage" className="btn btn-ghost btn-xs w-full gap-1">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
+                <path d="M4.5 2A2.5 2.5 0 002 4.5v2.882c0 .663.263 1.3.732 1.768L7.5 13.88V17.5a1 1 0 001 1h3a1 1 0 001-1v-3.62l4.768-4.73c.469-.468.732-1.105.732-1.768V4.5A2.5 2.5 0 0015.5 2h-11z" />
+              </svg>
+              Manage Assignments
+            </Link>
+          </div>
         </div>
-      </div>
-
-      <div className="rounded-box bg-base-100 p-3 shadow-float">
-        <h2 className="t-label font-semibold mb-2">
-          Assigned Students
-          {assignedStudents.length > 0 && <span className="badge badge-sm badge-ghost ml-1.5">{assignedStudents.length}</span>}
-        </h2>
-        {assignedStudents.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th className="w-36">Name</th>
-                  <th className="w-20">Grade</th>
-                  <th className="w-36">Parent</th>
-                  <th className="w-24">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {assignedStudents.map((s) => (
-                  <tr key={s.name}>
-                    <td className="font-medium text-sm">{s.name}</td>
-                    <td className="text-sm text-base-content/60">{s.grade}</td>
-                    <td className="text-sm text-base-content/60">{s.parent}</td>
-                    <td>
-                      <StatusBadge status={s.status} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <p className="text-sm text-base-content/40 py-4 text-center">No students assigned.</p>
-        )}
-      </div>
-
-      <div className="rounded-box bg-base-100 p-3 shadow-float">
-        <h2 className="t-label font-semibold mb-2">Upcoming Schedule</h2>
-        {hasSchedule ? (
-          <div className="overflow-x-auto">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th className="w-28">Date</th>
-                  <th className="w-24">Start</th>
-                  <th className="w-24">End</th>
-                  <th className="w-40">Route</th>
-                </tr>
-              </thead>
-              <tbody>
-                {weekDays.map((day) => {
-                  const [start, end] = driver.schedule.split(" — ")
-                  return (
-                    <tr key={day.label}>
-                      <td className="text-sm font-medium">{day.label}</td>
-                      <td className="text-sm text-base-content/60">{start}</td>
-                      <td className="text-sm text-base-content/60">{end}</td>
-                      <td className="text-sm text-base-content/60">{route ?? "—"}</td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <p className="text-sm text-base-content/40 py-4 text-center">No upcoming schedule.</p>
-        )}
       </div>
     </div>
   )

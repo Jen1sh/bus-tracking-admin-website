@@ -13,7 +13,7 @@ export interface ErrorResponse<T> {
 }
 
 export interface PaginatedResponse<T> {
-  items: T[];
+  data: { items: T[] };
   total: number;
   page: number;
   limit: number;
