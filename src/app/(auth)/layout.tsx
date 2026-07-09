@@ -9,7 +9,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
     <AuthGuard>
       <div className="drawer lg:drawer-open">
         <input id="sidebar-drawer" type="checkbox" className="drawer-toggle" />
-        <div className="drawer-content flex flex-col">
+        <div className="drawer-content flex flex-col bg-base-200">
           <div className="sticky top-0 z-30 flex items-center gap-3 border-b border-base-300 bg-base-100/80 px-4 py-3 backdrop-blur-md lg:hidden">
             <label htmlFor="sidebar-drawer" className="btn btn-ghost btn-sm drawer-button">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5">

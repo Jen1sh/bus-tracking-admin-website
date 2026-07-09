@@ -4,7 +4,21 @@
   "permission": {
     "skill": {
       "ui-ux-pro-max": "allow",
-      "daisyui": "allow"
+      "daisyui": "allow",
+      "design-taste-frontend": "allow",
+      "design-taste-frontend-v1": "allow",
+      "impeccable": "allow",
+      "stitch-design-taste": "allow",
+      "redesign-existing-projects": "allow",
+      "minimalist-ui": "allow",
+      "industrial-brutalist-ui": "allow",
+      "imagegen-frontend-web": "allow",
+      "imagegen-frontend-mobile": "allow",
+      "image-to-code": "allow",
+      "high-end-visual-design": "allow",
+      "gpt-taste": "allow",
+      "full-output-enforcement": "allow",
+      "brandkit": "allow"
     }
   }
 }

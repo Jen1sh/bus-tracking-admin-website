@@ -53,7 +53,7 @@ export default async function DriverDetailPage({ params }: { params: Promise<{ i
   const hasSchedule = driver.schedule !== "—"
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <Link href="/driver" className="inline-flex items-center gap-1 text-xs text-base-content/40 hover:text-base-content/70 transition-colors">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
           <path fillRule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clipRule="evenodd" />
@@ -61,11 +61,11 @@ export default async function DriverDetailPage({ params }: { params: Promise<{ i
         Back to Drivers
       </Link>
 
-      <div className="rounded-box border border-base-300 bg-base-100 p-4 shadow-card card-hover">
+      <div className="rounded-box bg-base-100 p-4 shadow-float">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="t-h2">{driver.name}</h1>
+              <h1 className="t-h1">{driver.name}</h1>
               <StatusBadge status={driver.status} />
             </div>
             {route ? (
@@ -78,7 +78,7 @@ export default async function DriverDetailPage({ params }: { params: Promise<{ i
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="rounded-box border border-base-300 bg-base-100 p-3 shadow-card card-hover">
+        <div className="rounded-box bg-base-100 p-3 shadow-float">
           <h2 className="t-label font-semibold mb-2">Personal Info</h2>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
@@ -104,7 +104,7 @@ export default async function DriverDetailPage({ params }: { params: Promise<{ i
           </div>
         </div>
 
-        <div className="rounded-box border border-base-300 bg-base-100 p-3 shadow-card card-hover">
+        <div className="rounded-box bg-base-100 p-3 shadow-float">
           <h2 className="t-label font-semibold mb-2">Bus Assignment</h2>
           {driver.bus !== "—" ? (
             <div className="space-y-2 text-sm">
@@ -135,25 +135,25 @@ export default async function DriverDetailPage({ params }: { params: Promise<{ i
         </div>
       </div>
 
-      <div className="rounded-box border border-base-300 bg-base-100 p-3 shadow-card card-hover">
+      <div className="rounded-box bg-base-100 p-3 shadow-float">
         <h2 className="t-label font-semibold mb-2">
           Assigned Students
           {assignedStudents.length > 0 && <span className="badge badge-sm badge-ghost ml-1.5">{assignedStudents.length}</span>}
         </h2>
         {assignedStudents.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="table table-xs">
+            <table className="table">
               <thead>
                 <tr>
-                  <th>Name</th>
-                  <th>Grade</th>
-                  <th>Parent</th>
-                  <th>Status</th>
+                  <th className="w-36">Name</th>
+                  <th className="w-20">Grade</th>
+                  <th className="w-36">Parent</th>
+                  <th className="w-24">Status</th>
                 </tr>
               </thead>
               <tbody>
-                {assignedStudents.map((s, i) => (
-                  <tr key={i}>
+                {assignedStudents.map((s) => (
+                  <tr key={s.name}>
                     <td className="font-medium text-sm">{s.name}</td>
                     <td className="text-sm text-base-content/60">{s.grade}</td>
                     <td className="text-sm text-base-content/60">{s.parent}</td>
@@ -170,24 +170,24 @@ export default async function DriverDetailPage({ params }: { params: Promise<{ i
         )}
       </div>
 
-      <div className="rounded-box border border-base-300 bg-base-100 p-3 shadow-card card-hover">
+      <div className="rounded-box bg-base-100 p-3 shadow-float">
         <h2 className="t-label font-semibold mb-2">Upcoming Schedule</h2>
         {hasSchedule ? (
           <div className="overflow-x-auto">
-            <table className="table table-xs">
+            <table className="table">
               <thead>
                 <tr>
-                  <th>Date</th>
-                  <th>Start</th>
-                  <th>End</th>
-                  <th>Route</th>
+                  <th className="w-28">Date</th>
+                  <th className="w-24">Start</th>
+                  <th className="w-24">End</th>
+                  <th className="w-40">Route</th>
                 </tr>
               </thead>
               <tbody>
-                {weekDays.map((day, i) => {
+                {weekDays.map((day) => {
                   const [start, end] = driver.schedule.split(" — ")
                   return (
-                    <tr key={i}>
+                    <tr key={day.label}>
                       <td className="text-sm font-medium">{day.label}</td>
                       <td className="text-sm text-base-content/60">{start}</td>
                       <td className="text-sm text-base-content/60">{end}</td>

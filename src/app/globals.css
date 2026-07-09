@@ -35,18 +35,18 @@
   --size-field: 0.25rem;
 
   --border: 1px;
-  --depth: 1;
+  --depth: 0;
   --noise: 0;
 }
 
 @theme inline {
   --font-sans: var(--font-inter);
-  --font-mono: var(--font-inter);
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
   --radius-box-sm: 0.5rem;
   --radius-box-md: 0.875rem;
   --radius-box-lg: 1.125rem;
-  --radius-box-xl: 1.875rem;
+  --radius-box-xl: 1rem;
 
   --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.06);
   --shadow-float: 0 4px 12px -2px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.06);
@@ -55,15 +55,7 @@
 }
 
 :root {
-  --sh-xs: 0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.06);
   --sh-md: 0 4px 12px -2px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.06);
-  --sh-lg: 0 8px 24px -4px rgb(0 0 0 / 0.1), 0 4px 8px -4px rgb(0 0 0 / 0.06);
-  --sh-lift: 0 12px 32px -8px rgb(0 0 0 / 0.12);
-  --sh-marker: 0 0 0 6px rgb(26 86 160 / 0.2);
-  --r-sm: 0.5rem;
-  --r-md: 0.875rem;
-  --r-lg: 1.125rem;
-  --r-full: 9999px;
 }
 
 @utility t-display {
@@ -131,7 +123,7 @@
 }
 
 @utility card-hover {
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   &:hover {
     transform: translateY(-2px);
     box-shadow: var(--sh-md);
@@ -161,7 +153,6 @@
 }
 
 @utility nav-active {
-  box-shadow: inset 3px 0 0 0 var(--color-primary);
   background: rgb(26 86 160 / 0.08);
   color: var(--color-primary);
 }
@@ -169,5 +160,11 @@
 @media (prefers-reduced-motion: reduce) {
   .dot-pulse {
     animation: none;
+  }
+  .card-hover:hover {
+    transform: none;
+  }
+  .glass {
+    backdrop-filter: none;
   }
 }

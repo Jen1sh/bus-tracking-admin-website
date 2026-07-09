@@ -7,6 +7,7 @@ interface NotificationCardProps {
   description: string
   timestamp: string
   compact?: boolean
+  flat?: boolean
 }
 
 export function NotificationCard({
@@ -16,15 +17,19 @@ export function NotificationCard({
   description,
   timestamp,
   compact,
+  flat,
 }: NotificationCardProps) {
+  const cardClasses = flat
+    ? "flex items-start"
+    : "flex items-start rounded-box bg-base-100 shadow-float"
+  const spacingClasses = compact ? "gap-2 p-2.5" : "gap-3 p-4"
+
   return (
-    <div
-      className={`flex items-start rounded-box border border-base-300 bg-base-100 shadow-card card-hover ${compact ? "gap-2 p-2.5" : "gap-3 p-4"}`}
-    >
+    <div className={`${cardClasses} ${spacingClasses}`}>
       <div
         className={`flex shrink-0 items-center justify-center rounded-xl ${iconBg} text-white ${compact ? "h-8 w-8" : "h-10 w-10"}`}
       >
-        <span className={compact ? "scale-75" : ""}>{icon}</span>
+        <span className={compact ? "flex [&>svg]:h-4 [&>svg]:w-4" : "flex"}>{icon}</span>
       </div>
       <div className="flex-1 min-w-0">
         <div className={`t-label text-base-content ${compact ? "text-xs" : ""}`}>{title}</div>

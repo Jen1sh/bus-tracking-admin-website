@@ -65,8 +65,8 @@ export function Sidebar() {
   return (
     <>
       <label htmlFor="sidebar-drawer" className="drawer-overlay z-40" />
-      <aside className="flex min-h-full w-64 flex-col border-r border-base-300 bg-base-100 text-base-content shadow-sheet">
-        <div className="flex items-center gap-3 border-b border-base-300 px-5 py-4">
+      <aside className="flex min-h-full w-64 flex-col bg-base-100 text-base-content shadow-sheet">
+        <div className="flex items-center gap-3 px-5 py-4">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-content text-sm font-bold shadow-xs">
             B
           </div>
@@ -101,7 +101,7 @@ export function Sidebar() {
           </ul>
         </nav>
 
-        <div className="border-t border-base-300 p-3">
+        <div className="p-3">
           <div className="flex items-center gap-3 rounded-lg px-2 py-2">
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-neutral text-neutral-content text-sm font-semibold">
               {user?.name?.charAt(0) ?? "U"}

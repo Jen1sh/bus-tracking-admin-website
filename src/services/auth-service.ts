@@ -1,7 +1,7 @@
 import { API_ENDPOINTS } from "@/constants/api-endpoints";
 import axiosClient from "@/lib/axios";
 import type { APIResponse } from "@/types/api";
-import type { AuthResponse, LoginRequest } from "@/types/api/auth.interface";
+import type { AuthResponse, LoginRequest } from "@/types/models/bus";
 
 export const loginUser = async (data: LoginRequest) => {
   const res = await axiosClient.post<APIResponse<AuthResponse>>(
