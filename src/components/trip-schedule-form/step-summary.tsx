@@ -3,9 +3,13 @@
 import { format } from "date-fns"
 import type { UseFormReturn } from "react-hook-form"
 import type { TripScheduleData } from "@/schemas/trip-schedule-schema"
+import type { DriverUserResponse } from "@/types/models/driver"
+import type { BusSummaryResponse } from "@/types/models/bus"
 
 interface Props {
   form: UseFormReturn<TripScheduleData>
+  drivers: DriverUserResponse[]
+  buses: BusSummaryResponse[]
 }
 
 function displayTime(val: string) {
@@ -16,9 +20,12 @@ function displayTime(val: string) {
   return `${display}:${String(m).padStart(2, "0")} ${period}`
 }
 
-export function StepSummary({ form }: Props) {
+export function StepSummary({ form, drivers, buses }: Props) {
   const { watch } = form
   const data = watch()
+
+  const selectedDriver = drivers.find((d) => d.id === data.driverId)
+  const selectedBus = buses.find((b) => b.id === data.busId)
 
   return (
     <div className="space-y-5">
@@ -40,8 +47,13 @@ export function StepSummary({ form }: Props) {
       </div>
 
       <div className="rounded-box border border-base-300 bg-base-100 p-5">
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-base-content/50">Bus</h3>
+        <p className="mt-2 text-sm font-medium">{selectedBus ? `${selectedBus.displayId} — ${selectedBus.plate}` : "—"}</p>
+      </div>
+
+      <div className="rounded-box border border-base-300 bg-base-100 p-5">
         <h3 className="text-xs font-semibold uppercase tracking-wider text-base-content/50">Driver</h3>
-        <p className="mt-2 text-sm font-medium">{data.driver || "—"}</p>
+        <p className="mt-2 text-sm font-medium">{selectedDriver?.name ?? "—"}</p>
       </div>
 
       <div className="rounded-box border border-base-300 bg-base-100 p-5">

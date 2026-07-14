@@ -19,4 +19,24 @@ export const API_ENDPOINTS = {
     UNASSIGNED_BUSES: "admin/bus-management/unassigned-buses",
     UNASSIGNED_USERS: "admin/bus-management/unassigned-users",
   },
+
+  STUDENT: {
+    BASE: "admin/students",
+    BY_ID: (id: string) => `admin/students/${id}`,
+  },
+  PARENT: {
+    BASE: "admin/parents",
+    BY_ID: (id: string) => `admin/parents/${id}`,
+  },
+
+  DASHBOARD: {
+    STATS: "admin/dashboard/stats",
+    ACTIVE_BUSES: "admin/active-buses",
+    BUS_LOCATION: (id: string) => `admin/buses/${id}/location`,
+  },
+
+  TRIP: {
+    BASE: "admin/trips",
+    BY_ID: (id: string) => `admin/trips/${id}`,
+  },
 } as const;

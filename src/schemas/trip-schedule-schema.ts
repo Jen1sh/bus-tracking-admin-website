@@ -5,7 +5,8 @@ export const tripScheduleSchema = z.object({
   endLocation: z.string().min(1, "Select an end location"),
   startTime: z.string().min(1, "Enter start time"),
   endTime: z.string().min(1, "Enter end time"),
-  driver: z.string().min(1, "Select a driver"),
+  busId: z.number().min(1, "Select a bus"),
+  driverId: z.number().min(1, "Select a driver"),
   selectedDates: z.array(z.date()).min(1, "Pick at least one date"),
 })
 
@@ -27,9 +28,9 @@ export const steps: StepConfig[] = [
   },
   {
     id: 2,
-    title: "Driver, Time & Dates",
-    description: "Assign driver, set time, and pick trip dates",
-    fields: ["driver", "startTime", "endTime", "selectedDates"],
+    title: "Driver, Bus, Time & Dates",
+    description: "Assign a bus and driver, set time, and pick trip dates",
+    fields: ["busId", "driverId", "startTime", "endTime", "selectedDates"],
   },
   {
     id: 3,

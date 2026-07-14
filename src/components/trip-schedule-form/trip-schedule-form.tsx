@@ -1,18 +1,44 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
+import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { tripScheduleSchema, steps, type TripScheduleData } from "@/schemas/trip-schedule-schema"
+import useTrip from "@/hooks/use-trip"
+import useDriver from "@/hooks/use-driver"
+import useBus from "@/hooks/use-bus"
 import { StepRouteLocations } from "./step-route-locations"
 import { StepTimeDriver } from "./step-time-driver"
 import { StepSummary } from "./step-summary"
-
-const stepComponents = [StepRouteLocations, StepTimeDriver, StepSummary] as const
+import { format } from "date-fns"
 
 export function TripScheduleForm() {
+  const router = useRouter()
   const [step, setStep] = useState(0)
-  const [submitted, setSubmitted] = useState(false)
+
+  const { useCreateTrip } = useTrip()
+  const { useDrivers } = useDriver()
+  const { useBusList } = useBus()
+
+  const { data: driversRes } = useDrivers({
+    limit: 200,
+    search: "",
+    status: "ACTIVE",
+    sortBy: "name",
+    sortOrder: "asc",
+  })
+
+  const { data: busesRes } = useBusList({ search: "", status: "ongoing" })
+
+  const drivers = useMemo(() => {
+    if (!driversRes) return []
+    return driversRes.pages.flatMap((p) => p.data.items)
+  }, [driversRes])
+
+  const buses = useMemo(() => busesRes?.data ?? [], [busesRes])
+
+  const createMutation = useCreateTrip()
 
   const form = useForm<TripScheduleData>({
     resolver: zodResolver(tripScheduleSchema),
@@ -21,13 +47,13 @@ export function TripScheduleForm() {
       endLocation: "",
       startTime: "07:00",
       endTime: "07:45",
-      driver: "",
+      busId: 0,
+      driverId: 0,
       selectedDates: [],
     },
   })
 
   const currentStep = steps[step]
-  const CurrentComponent = stepComponents[step]
   const isFirst = step === 0
   const isLast = step === steps.length - 1
 
@@ -44,21 +70,27 @@ export function TripScheduleForm() {
   }
 
   const handleSubmit = async () => {
-    await new Promise((r) => setTimeout(r, 600))
-    setSubmitted(true)
+    const data = form.getValues()
+    createMutation.mutate(
+      {
+        busId: data.busId,
+        driverId: data.driverId,
+        startTime: data.startTime,
+        dates: data.selectedDates.map((d) => format(d, "yyyy-MM-dd")),
+      },
+      {
+        onSuccess: () => router.push("/trips"),
+      },
+    )
   }
 
-  if (submitted) {
+  const isSubmitting = createMutation.isPending
+
+  if (isSubmitting) {
     return (
       <div className="flex flex-col items-center gap-4 py-16">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-success/10">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-8 w-8 text-success">
-            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" />
-          </svg>
-        </div>
-        <h2 className="text-xl font-bold">Trip Scheduled!</h2>
-        <p className="text-sm text-base-content/60">The trip has been created successfully.</p>
-        <a href="/trips" className="btn btn-primary mt-4">Back to Trips</a>
+        <span className="loading loading-spinner loading-lg text-primary" />
+        <p className="text-sm text-base-content/60">Creating trips...</p>
       </div>
     )
   }
@@ -83,7 +115,9 @@ export function TripScheduleForm() {
       </div>
 
       <div className="rounded-box border border-base-300 bg-base-100 p-6">
-        <CurrentComponent form={form} />
+        {step === 0 && <StepRouteLocations form={form} />}
+        {step === 1 && <StepTimeDriver form={form} drivers={drivers} buses={buses} />}
+        {step === 2 && <StepSummary form={form} drivers={drivers} buses={buses} />}
       </div>
 
       <div className="flex justify-between">
@@ -91,7 +125,7 @@ export function TripScheduleForm() {
           Back
         </button>
         {isLast ? (
-          <button type="button" onClick={handleSubmit} className="btn btn-primary">
+          <button type="button" onClick={handleSubmit} className="btn btn-primary" disabled={isSubmitting}>
             Confirm Schedule
           </button>
         ) : (

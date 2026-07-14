@@ -1,28 +1,27 @@
 "use client"
 
-import { useState, useCallback, useMemo } from "react"
+import { useMemo, useCallback } from "react"
 import { useJsApiLoader, GoogleMap, OverlayView } from "@react-google-maps/api"
-import { DEFAULT_CENTER, DEFAULT_ZOOM, LOCATION_COORDS } from "@/constants/trip-data"
+import { DEFAULT_CENTER, DEFAULT_ZOOM } from "@/constants/trip-data"
+import type { ActiveBusResponse } from "@/types/models/active-bus"
+import type { LocationResponse } from "@/types/models/location"
 
 const containerStyle = {
   width: "100%",
   height: "100%",
 }
 
-const buses = [
-  { id: "Bus #12", pos: LOCATION_COORDS["Maple St Station"], route: "Route 5" },
-  { id: "Bus #07", pos: LOCATION_COORDS["Oak Ave Hub"], route: "Route 3" },
-  { id: "Bus #05", pos: LOCATION_COORDS["Central Depot"], route: "Route 2" },
-  { id: "Bus #03", pos: LOCATION_COORDS["Pine St Terminal"], route: "Route 1" },
-  { id: "Bus #09", pos: LOCATION_COORDS["Elm St Stop"], route: "Route 4" },
-  { id: "Bus #15", pos: LOCATION_COORDS["River Rd Station"], route: "Route 6" },
-]
+interface DashboardMapProps {
+  buses: ActiveBusResponse[]
+  selectedBusId: string | null
+  onSelectBus: (busId: number) => void
+  location?: LocationResponse | null
+}
 
-function BusMapMarker({ bus, visible }: { bus: (typeof buses)[0]; visible: boolean }) {
-  if (!visible) return null
+function BusMapMarker({ bus, location }: { bus: ActiveBusResponse; location: LocationResponse }) {
   return (
     <OverlayView
-      position={{ lat: bus.pos[0], lng: bus.pos[1] }}
+      position={{ lat: location.latitude, lng: location.longitude }}
       mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
       getPixelPositionOffset={(width, height) => ({ x: -(width / 2), y: -height })}
     >
@@ -35,8 +34,11 @@ function BusMapMarker({ bus, visible }: { bus: (typeof buses)[0]; visible: boole
             </svg>
           </div>
         </div>
-        <span className="mt-1 whitespace-nowrap rounded bg-base-100 px-1.5 py-0.5 text-[10px] font-medium text-base-content">
-          {bus.id}
+        <span className="mt-1 whitespace-nowrap rounded bg-base-100 px-1.5 py-0.5 text-[10px] font-medium text-base-content shadow-sm">
+          {bus.plate}
+        </span>
+        <span className="mt-0.5 text-[10px] text-base-content/60 whitespace-nowrap rounded bg-base-100 px-1.5 py-0.5">
+          {bus.driverName}
         </span>
         <span className="mt-0.5 h-1.5 w-1.5 rounded-full bg-success dot-pulse" />
       </div>
@@ -44,13 +46,7 @@ function BusMapMarker({ bus, visible }: { bus: (typeof buses)[0]; visible: boole
   )
 }
 
-export function DashboardMap() {
-  const [selectedBus, setSelectedBus] = useState<string | null>(null)
-
-  const toggleBus = useCallback((id: string) => {
-    setSelectedBus((prev) => (prev === id ? null : id))
-  }, [])
-
+export function DashboardMap({ buses, selectedBusId, onSelectBus, location }: DashboardMapProps) {
   const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY ?? "",
@@ -65,6 +61,25 @@ export function DashboardMap() {
     [],
   )
 
+  const selectedBus = useMemo(
+    () => buses.find((b) => String(b.busId) === selectedBusId) ?? null,
+    [buses, selectedBusId],
+  )
+
+  const handleToggle = useCallback(
+    (busId: number) => {
+      onSelectBus(busId)
+    },
+    [onSelectBus],
+  )
+
+  const center = useMemo(() => {
+    if (location) {
+      return { lat: location.latitude, lng: location.longitude }
+    }
+    return { lat: DEFAULT_CENTER[0], lng: DEFAULT_CENTER[1] }
+  }, [location])
+
   if (!isLoaded) {
     return (
       <div className="flex h-[300px] items-center justify-center rounded-box bg-base-200 lg:h-[400px]">
@@ -76,27 +91,28 @@ export function DashboardMap() {
   return (
     <div className="overflow-hidden rounded-box bg-base-100 shadow-card">
       <div className="border-b border-base-200 px-3 py-2">
-        <span className="t-label font-semibold text-base-content">Buses</span>
-        <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-          {buses.map((b) => (
-            <button
-              key={b.id}
-              type="button"
-              onClick={() => toggleBus(b.id)}
-              className={`badge badge-sm cursor-pointer border-none gap-1.5 px-3 transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] ${selectedBus === b.id ? "badge-primary" : "badge-outline hover:bg-primary/10"}`}
-            >
-              <span className={`h-1.5 w-1.5 rounded-full ${selectedBus === b.id ? "bg-white" : "bg-success"}`} />
-              {b.id}
-            </button>
-          ))}
-        </div>
+        <span className="t-label font-semibold text-base-content">Live Buses</span>
+        {buses.length > 0 && (
+          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+            {buses.map((b) => (
+              <button
+                key={b.busId}
+                type="button"
+                onClick={() => handleToggle(b.busId)}
+                className={`badge badge-sm cursor-pointer border-none gap-1.5 px-3 transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] ${selectedBusId === String(b.busId) ? "badge-primary" : "badge-outline hover:bg-primary/10"}`}
+              >
+                <span className={`h-1.5 w-1.5 rounded-full ${selectedBusId === String(b.busId) ? "bg-white" : "bg-success"}`} />
+                {b.plate}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
-
       <div className="h-[300px] lg:h-[400px]">
-        <GoogleMap mapContainerStyle={containerStyle} center={{ lat: DEFAULT_CENTER[0], lng: DEFAULT_CENTER[1] }} zoom={DEFAULT_ZOOM} options={mapOptions}>
-          {buses.map((bus) => (
-            <BusMapMarker key={bus.id} bus={bus} visible={selectedBus === null || selectedBus === bus.id} />
-          ))}
+        <GoogleMap mapContainerStyle={containerStyle} center={center} zoom={DEFAULT_ZOOM} options={mapOptions}>
+          {selectedBus && location && (
+            <BusMapMarker bus={selectedBus} location={location} />
+          )}
         </GoogleMap>
       </div>
     </div>

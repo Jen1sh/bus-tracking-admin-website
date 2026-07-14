@@ -4,7 +4,8 @@ import { DayPicker } from "react-day-picker"
 import { format } from "date-fns"
 import type { UseFormReturn } from "react-hook-form"
 import type { TripScheduleData } from "@/schemas/trip-schedule-schema"
-import { DRIVERS } from "@/constants/trip-data"
+import type { DriverUserResponse } from "@/types/models/driver"
+import type { BusSummaryResponse } from "@/types/models/bus"
 import "react-day-picker/style.css"
 
 const HOURS = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, "0"))
@@ -69,31 +70,56 @@ function TimePicker({
 
 interface Props {
   form: UseFormReturn<TripScheduleData>
+  drivers: DriverUserResponse[]
+  buses: BusSummaryResponse[]
 }
 
-export function StepTimeDriver({ form }: Props) {
-  const { register, setValue, watch, formState: { errors } } = form
+export function StepTimeDriver({ form, drivers, buses }: Props) {
+  const { setValue, watch, formState: { errors } } = form
   const selectedDates = watch("selectedDates") ?? []
 
   return (
     <div className="space-y-6">
-      <div className="form-control w-full">
-        <label className="label" htmlFor="driver">
-          <span className="label-text font-medium">Assign Driver</span>
-        </label>
-        <select
-          id="driver"
-          className="select select-bordered w-full"
-          {...register("driver")}
-        >
-          <option value="">Select a driver</option>
-          {DRIVERS.map((d) => (
-            <option key={d.id} value={d.name}>{d.name}</option>
-          ))}
-        </select>
-        {errors.driver && (
-          <span className="mt-1 text-xs text-error">{errors.driver.message}</span>
-        )}
+      <div className="grid gap-5 sm:grid-cols-2">
+        <div className="form-control w-full">
+          <label className="label" htmlFor="busId">
+            <span className="label-text font-medium">Bus</span>
+          </label>
+          <select
+            id="busId"
+            className="select select-bordered w-full"
+            value={watch("busId") ?? ""}
+            onChange={(e) => setValue("busId", Number(e.target.value), { shouldValidate: true })}
+          >
+            <option value="">Select a bus</option>
+            {buses.map((b) => (
+              <option key={b.id} value={b.id}>{b.displayId} — {b.plate}</option>
+            ))}
+          </select>
+          {errors.busId && (
+            <span className="mt-1 text-xs text-error">Select a bus</span>
+          )}
+        </div>
+
+        <div className="form-control w-full">
+          <label className="label" htmlFor="driverId">
+            <span className="label-text font-medium">Driver</span>
+          </label>
+          <select
+            id="driverId"
+            className="select select-bordered w-full"
+            value={watch("driverId") ?? ""}
+            onChange={(e) => setValue("driverId", Number(e.target.value), { shouldValidate: true })}
+          >
+            <option value="">Select a driver</option>
+            {drivers.map((d) => (
+              <option key={d.id} value={d.id}>{d.name}</option>
+            ))}
+          </select>
+          {errors.driverId && (
+            <span className="mt-1 text-xs text-error">Select a driver</span>
+          )}
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-6">
