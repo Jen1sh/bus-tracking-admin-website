@@ -1,12 +1,32 @@
-import { DriverUserResponse } from './driver';
+import { AccountStatus } from '@/types/enums';
 
-export interface ParentUserRequest {
+export interface ChildSummary {
+  id: number;
   name: string;
-  email: string;
-  password: string;
-  phone?: string;
-  schoolId?: number;
-  childrenIds?: number[];
+  klass: string | null;
+  busDisplayId: string | null;
 }
 
-export type ParentUserResponse = DriverUserResponse;
+export interface ParentSummaryResponse {
+  id: number;
+  name: string;
+  phone: string;
+  email: string | null;
+  children: ChildSummary[];
+  accessStatus: AccountStatus;
+}
+
+export interface ParentDetailResponse {
+  id: number;
+  name: string;
+  phone: string;
+  email: string | null;
+  accessStatus: AccountStatus;
+  children: ChildSummary[];
+}
+
+export interface ParentUpdateRequest {
+  name?: string;
+  phone?: string;
+  email?: string;
+}

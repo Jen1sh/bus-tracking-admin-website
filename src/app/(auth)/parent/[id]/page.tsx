@@ -2,21 +2,32 @@
 
 import { useParams } from "next/navigation"
 import Link from "next/link"
+import { ArrowLeft, Users, ShieldCheck } from "lucide-react"
+import { Breadcrumbs } from "@/components/breadcrumbs"
 import { StatusBadge } from "@/components/status-badge"
 import useParent from "@/hooks/use-parent"
 
 const statusMap: Record<string, string> = {
   ACTIVE: "active",
   SUSPENDED: "inactive",
-  PENDING_VERIFICATION: "inactive",
+  PENDING_VERIFICATION: "pending",
+}
+
+const statusLabel: Record<string, string> = {
+  ACTIVE: "Active",
+  SUSPENDED: "Suspended",
+  PENDING_VERIFICATION: "Pending",
 }
 
 export default function ParentDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const { useParentDetail } = useParent()
+  const { useParentDetail, useRevokeAccess, useResendInvite } = useParent()
 
   const { data: res, isLoading, error } = useParentDetail(id)
   const parent = res?.data ?? null
+
+  const revokeMutation = useRevokeAccess()
+  const resendMutation = useResendInvite()
 
   if (isLoading) {
     return (
@@ -47,54 +58,131 @@ export default function ParentDetailPage() {
     )
   }
 
-  const effectiveStatus = statusMap[parent.accountStatus] ?? "inactive"
+  const badgeStatus = statusMap[parent.accessStatus] ?? "inactive"
+  const isPending = parent.accessStatus === "PENDING_VERIFICATION"
+  const isSuspended = parent.accessStatus === "SUSPENDED"
 
   return (
     <div className="space-y-6">
-      <Link href="/parent" className="inline-flex items-center gap-1 text-xs text-base-content/40 hover:text-base-content/70 transition-colors">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
-          <path fillRule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clipRule="evenodd" />
-        </svg>
-        Back to Parents
-      </Link>
+      <Breadcrumbs items={[{ label: "Dashboard", href: "/dashboard" }, { label: "Parents", href: "/parent" }, { label: parent.name }]} />
 
-      <div className="rounded-box bg-base-100 p-4 shadow-card">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="t-h1">{parent.name}</h1>
-              <StatusBadge status={effectiveStatus} />
+      <div className="flex items-start gap-3">
+        <Link href="/parent" className="btn btn-ghost btn-xs btn-square mt-0.5 shrink-0">
+          <ArrowLeft size={16} />
+        </Link>
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-xl font-semibold">
+          {parent.name.charAt(0).toUpperCase()}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-xl font-bold tracking-tight">{parent.name}</h1>
+            <StatusBadge status={badgeStatus} label={statusLabel[parent.accessStatus] ?? parent.accessStatus} />
+            <div className="flex gap-1.5 ml-auto">
+              {!isSuspended && (
+                <button
+                  className="btn btn-outline btn-error btn-xs"
+                  onClick={() => revokeMutation.mutate(id)}
+                  disabled={revokeMutation.isPending}
+                >
+                  {revokeMutation.isPending ? <span className="loading loading-spinner loading-xs" /> : "Revoke Access"}
+                </button>
+              )}
+              {isPending && (
+                <button
+                  className="btn btn-primary btn-xs"
+                  onClick={() => resendMutation.mutate(id)}
+                  disabled={resendMutation.isPending}
+                >
+                  {resendMutation.isPending ? <span className="loading loading-spinner loading-xs" /> : "Resend Invite"}
+                </button>
+              )}
             </div>
-            <p className="t-body text-base-content/50 mt-0.5">{parent.email}</p>
           </div>
+          <p className="mt-0.5 text-sm text-base-content/50">
+            <span className="font-medium text-base-content/70">{parent.children.length}</span>
+            {parent.children.length === 1 ? " child" : " children"}
+            <span className="mx-1.5 text-base-content/20">·</span>
+            <span className="font-medium text-base-content/70">{statusLabel[parent.accessStatus] ?? parent.accessStatus}</span> access
+          </p>
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="rounded-box bg-base-100 p-3 shadow-card">
-          <h2 className="t-label font-semibold mb-2">Personal Info</h2>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-base-content/40">Name</span>
-              <span className="text-base-content">{parent.name}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-base-content/40">Email</span>
-              <span className="text-base-content">{parent.email}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-base-content/40">Phone</span>
-              <span className="text-base-content">{parent.phone ?? "—"}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-base-content/40">Role</span>
-              <span className="text-base-content">{parent.role}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-base-content/40">Joined</span>
-              <span className="text-base-content">{new Date(parent.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}</span>
-            </div>
+      <div className="flex flex-wrap gap-3">
+        <div className="rounded-box bg-base-100 p-3 shadow-card w-44">
+          <div className="flex items-center gap-1.5 mb-1">
+            <Users size={14} className="text-base-content/40" />
+            <span className="t-micro text-base-content/40 font-medium">Children</span>
           </div>
+          <div className="t-h2">{parent.children.length}</div>
+        </div>
+        <div className="rounded-box bg-base-100 p-3 shadow-card w-44">
+          <div className="flex items-center gap-1.5 mb-1">
+            <ShieldCheck size={14} className="text-base-content/40" />
+            <span className="t-micro text-base-content/40 font-medium">Access</span>
+          </div>
+          <StatusBadge status={badgeStatus} label={statusLabel[parent.accessStatus] ?? parent.accessStatus} />
+        </div>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-[2fr_1fr] items-start">
+        <div className="rounded-box bg-base-100 p-4 shadow-card">
+          <h2 className="t-label font-semibold mb-3">Contact Details</h2>
+          <div className="flex flex-col gap-3">
+            <label className="form-control w-full">
+              <div className="label py-0 pb-1">
+                <span className="label-text text-xs text-base-content/40">Full Name</span>
+              </div>
+              <div className="input input-bordered input-md bg-base-200/50 flex items-center text-sm font-medium h-10 px-3 rounded-lg w-full">
+                {parent.name}
+              </div>
+            </label>
+            <label className="form-control w-full">
+              <div className="label py-0 pb-1">
+                <span className="label-text text-xs text-base-content/40">Phone</span>
+              </div>
+              <div className="input input-bordered input-md bg-base-200/50 flex items-center text-sm h-10 px-3 rounded-lg w-full">
+                {parent.phone ?? "—"}
+              </div>
+            </label>
+            <label className="form-control w-full">
+              <div className="label py-0 pb-1">
+                <span className="label-text text-xs text-base-content/40">Email</span>
+              </div>
+              <div className="input input-bordered input-md bg-base-200/50 flex items-center text-sm h-10 px-3 rounded-lg w-full">
+                {parent.email ?? "—"}
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div className="rounded-box bg-base-100 p-4 shadow-card">
+          <h2 className="t-label font-semibold mb-3">
+            Children
+            {parent.children.length > 0 && <span className="badge badge-sm badge-ghost ml-1.5">{parent.children.length}</span>}
+          </h2>
+          {parent.children.length > 0 ? (
+            <div className="space-y-3">
+              {parent.children.map((c) => (
+                <div key={c.id} className="flex items-center gap-3 rounded-lg bg-base-200/30 p-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-semibold">
+                    {c.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-sm">{c.name}</div>
+                    <div className="text-xs text-base-content/50">
+                      {c.busDisplayId && <>Bus: {c.busDisplayId}</>}
+                      {c.busDisplayId && c.klass && <span className="mx-1 text-base-content/20">·</span>}
+                      {c.klass && <>Class: {c.klass}</>}
+                      {!c.busDisplayId && !c.klass && "—"}
+                    </div>
+                  </div>
+                  <StatusBadge status="active" label="Active" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-base-content/40 py-4 text-center">No children linked.</p>
+          )}
         </div>
       </div>
     </div>

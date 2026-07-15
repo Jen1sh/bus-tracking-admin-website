@@ -1,3 +1,7 @@
+# API Reference
+
+See `REQUIREMENT.md` for the full admin API contract — endpoints, request/response shapes, business rules, status enums, and known gaps. This is the source of truth for all feature work.
+
 # This is NOT the Next.js you know
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.

@@ -2,38 +2,48 @@
 
 import { useParams } from "next/navigation"
 import Link from "next/link"
-import { useQuery } from "@tanstack/react-query"
+import { ArrowLeft, Lock, Bus, Calendar } from "lucide-react"
+import { Breadcrumbs } from "@/components/breadcrumbs"
 import { StatusBadge } from "@/components/status-badge"
-import { getBusById } from "@/services/bus-service"
 import useDriver from "@/hooks/use-driver"
+import { DriverStatus } from "@/types/enums"
 
 const statusMap: Record<string, string> = {
   ACTIVE: "active",
-  SUSPENDED: "inactive",
-  PENDING_VERIFICATION: "inactive",
+  ON_LEAVE: "on-leave",
+  INACTIVE: "inactive",
+}
+
+const statusLabel: Record<string, string> = {
+  ACTIVE: "Active",
+  ON_LEAVE: "On Leave",
+  INACTIVE: "Inactive",
+}
+
+const formatDate = (iso: string | null) => {
+  if (!iso) return "—"
+  try {
+    return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+  } catch {
+    return iso
+  }
 }
 
 export default function DriverDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const { useDriverDetail, useBusAssignments } = useDriver()
+  const { useDriverDetail, useUpdateDriver } = useDriver()
 
-  const { data: driverRes, isLoading: driverLoading, error: driverError } = useDriverDetail(id)
-  const { data: mgmtRes } = useBusAssignments()
+  const { data: res, isLoading, error } = useDriverDetail(id)
+  const driver = res?.data ?? null
 
-  const driver = driverRes?.data ?? null
-  const assignments = mgmtRes?.data ?? []
-  const assignment = assignments.find((a) => a.userId === driver?.id)
-  const busId = assignment?.busId ? String(assignment.busId) : undefined
+  const deactivateMutation = useUpdateDriver()
 
-  const { data: busRes } = useQuery({
-    queryKey: ["bus", busId],
-    queryFn: () => getBusById(busId!),
-    enabled: !!busId,
-  })
+  const handleDeactivate = () => {
+    if (!confirm("Are you sure you want to deactivate this driver?")) return
+    deactivateMutation.mutate({ id, data: { status: DriverStatus.INACTIVE } })
+  }
 
-  const bus = busRes?.data ?? null
-
-  if (driverLoading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
         <span className="loading loading-spinner loading-md text-primary" />
@@ -41,10 +51,10 @@ export default function DriverDetailPage() {
     )
   }
 
-  if (driverError) {
+  if (error) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-3">
-        <span className="text-sm text-base-content/40">{(driverError as Error)?.message ?? "Failed to load driver"}</span>
+        <span className="text-sm text-base-content/40">{(error as Error)?.message ?? "Failed to load driver"}</span>
         <div className="flex gap-2">
           <Link href="/driver" className="btn btn-ghost btn-sm">Back to Drivers</Link>
           <button className="btn btn-primary btn-sm" onClick={() => window.location.reload()}>Retry</button>
@@ -62,88 +72,176 @@ export default function DriverDetailPage() {
     )
   }
 
-  const effectiveStatus = statusMap[driver.accountStatus] ?? "inactive"
+  const badgeStatus = statusMap[driver.status] ?? "inactive"
+  const isActive = driver.status === "ACTIVE" || driver.status === "ON_LEAVE"
 
   return (
     <div className="space-y-6">
-      <Link href="/driver" className="inline-flex items-center gap-1 text-xs text-base-content/40 hover:text-base-content/70 transition-colors">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
-          <path fillRule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clipRule="evenodd" />
-        </svg>
-        Back to Drivers
-      </Link>
+      <Breadcrumbs items={[{ label: "Dashboard", href: "/dashboard" }, { label: "Drivers", href: "/driver" }, { label: driver.name }]} />
 
-      <div className="rounded-box bg-base-100 p-4 shadow-card">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="t-h1">{driver.name}</h1>
-              <StatusBadge status={effectiveStatus} />
-            </div>
-            <p className="t-body text-base-content/50 mt-0.5">{driver.email}</p>
+      <div className="flex items-start gap-3">
+        <Link href="/driver" className="btn btn-ghost btn-xs btn-square mt-0.5 shrink-0">
+          <ArrowLeft size={16} />
+        </Link>
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-xl font-semibold">
+          {driver.name.charAt(0).toUpperCase()}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-xl font-bold tracking-tight">{driver.name}</h1>
+            <StatusBadge status={badgeStatus} label={statusLabel[driver.status] ?? driver.status} />
+            {isActive && (
+              <button
+                className="btn btn-error btn-xs gap-1.5 ml-auto"
+                onClick={handleDeactivate}
+                disabled={deactivateMutation.isPending}
+              >
+                {deactivateMutation.isPending ? (
+                  <span className="loading loading-spinner loading-xs" />
+                ) : (
+                  <Lock size={12} />
+                )}
+                Deactivate
+              </button>
+            )}
           </div>
+          <p className="mt-0.5 text-sm text-base-content/50">
+            {driver.busDisplayId ? (
+              <>Bus: <span className="font-medium text-base-content/70">{driver.busDisplayId}</span></>
+            ) : (
+              "No bus assigned"
+            )}
+            <span className="mx-1.5 text-base-content/20">·</span>
+            Joined: <span className="font-medium text-base-content/70">{formatDate(driver.joined)}</span>
+          </p>
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="rounded-box bg-base-100 p-3 shadow-card">
-          <h2 className="t-label font-semibold mb-2">Personal Info</h2>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-base-content/40">Email</span>
-              <span className="text-base-content">{driver.email}</span>
+      <div className="flex flex-wrap gap-3">
+        <div className="rounded-box bg-base-100 p-3 shadow-card w-48">
+          <div className="flex items-center gap-1.5 mb-1">
+            <Bus size={14} className="text-base-content/40" />
+            <span className="t-micro text-base-content/40 font-medium">Assigned Bus</span>
+          </div>
+          {driver.busDisplayId ? (
+            <div>
+              <div className="t-h2">{driver.busDisplayId}</div>
+              <Link href={`/bus/${driver.busId ?? driver.busDisplayId}`} className="text-xs text-primary link link-hover">
+                View Bus &rarr;
+              </Link>
             </div>
-            <div className="flex justify-between">
-              <span className="text-base-content/40">Phone</span>
-              <span className="text-base-content">{driver.phone ?? "—"}</span>
+          ) : (
+            <p className="text-sm text-base-content/40 py-2">No bus assigned.</p>
+          )}
+        </div>
+
+        <div className="rounded-box bg-base-100 p-3 shadow-card w-48">
+          <div className="flex items-center gap-1.5 mb-1">
+            <Calendar size={14} className="text-base-content/40" />
+            <span className="t-micro text-base-content/40 font-medium">Tenure</span>
+          </div>
+          <div className="t-h2">{formatDate(driver.joined)}</div>
+          <p className="t-micro text-base-content/40">Start date</p>
+        </div>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2 items-start">
+        <div className="rounded-box bg-base-100 p-4 shadow-card">
+          <h2 className="t-label font-semibold mb-3">Driver Details</h2>
+          <div className="flex flex-col gap-3">
+            <label className="form-control w-full">
+              <div className="label py-0 pb-1">
+                <span className="label-text text-xs text-base-content/40">Full Name</span>
+              </div>
+              <div className="input input-bordered input-md bg-base-200/50 flex items-center text-sm font-medium h-10 px-3 rounded-lg w-full">
+                {driver.name}
+              </div>
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="form-control w-full">
+                <div className="label py-0 pb-1">
+                  <span className="label-text text-xs text-base-content/40">Phone</span>
+                </div>
+                <div className="input input-bordered input-md bg-base-200/50 flex items-center text-sm h-10 px-3 rounded-lg w-full">
+                  {driver.phone}
+                </div>
+              </label>
+              <label className="form-control w-full">
+                <div className="label py-0 pb-1">
+                  <span className="label-text text-xs text-base-content/40">License</span>
+                </div>
+                <div className="input input-bordered input-md bg-base-200/50 flex items-center text-sm font-mono h-10 px-3 rounded-lg w-full">
+                  {driver.license}
+                </div>
+              </label>
             </div>
-            <div className="flex justify-between">
-              <span className="text-base-content/40">Role</span>
-              <span className="text-base-content">{driver.role}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-base-content/40">Joined</span>
-              <span className="text-base-content">{new Date(driver.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}</span>
-            </div>
+            <label className="form-control w-full">
+              <div className="label py-0 pb-1">
+                <span className="label-text text-xs text-base-content/40">Assigned Bus</span>
+              </div>
+              <div className="input input-bordered input-md bg-base-200/50 flex items-center text-sm h-10 px-3 rounded-lg w-full">
+                {driver.busDisplayId ?? "—"}
+              </div>
+            </label>
+            <label className="form-control w-full">
+              <div className="label py-0 pb-1">
+                <span className="label-text text-xs text-base-content/40">Status</span>
+              </div>
+              <div className="select select-bordered select-md bg-base-200/50 flex items-center h-10 px-3 rounded-lg w-full">
+                <StatusBadge status={badgeStatus} label={statusLabel[driver.status] ?? driver.status} />
+              </div>
+            </label>
           </div>
         </div>
 
-        <div className="rounded-box bg-base-100 p-3 shadow-card">
-          <h2 className="t-label font-semibold mb-2">Bus Assignment</h2>
-          {bus ? (
-            <div className="space-y-2 text-sm">
+        <div className="flex flex-col gap-4">
+          <div className="rounded-box bg-base-100 p-4 shadow-card">
+            <h2 className="t-label font-semibold mb-3">Summary</h2>
+            <div className="space-y-2.5 text-sm">
               <div className="flex justify-between">
-                <span className="text-base-content/40">Vehicle</span>
-                <Link href={`/bus/${bus.id}`} className="text-primary font-medium link link-hover">{bus.displayId}</Link>
+                <span className="text-base-content/40">Phone</span>
+                <span className="text-base-content">{driver.phone}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-base-content/40">Plate</span>
-                <span className="text-base-content font-mono">{bus.plate}</span>
+                <span className="text-base-content/40">License</span>
+                <span className="text-base-content font-mono">{driver.license}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-base-content/40">Capacity</span>
-                <span className="text-base-content">{bus.capacity ?? "—"}</span>
+                <span className="text-base-content/40">Assigned Bus</span>
+                <span className="text-base-content">{driver.busDisplayId ?? "—"}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-base-content/40">Route</span>
-                <span className="text-base-content text-right max-w-56">{bus.routeName ?? "—"}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-base-content/40">Shift</span>
-                <span className="text-base-content">{bus.shift ?? "—"}</span>
+                <span className="text-base-content/40">Joined</span>
+                <span className="text-base-content">{formatDate(driver.joined)}</span>
               </div>
             </div>
-          ) : (
-            <p className="text-sm text-base-content/40 py-4 text-center">No bus currently assigned.</p>
-          )}
-          <div className="mt-3 pt-3 border-t border-base-200">
-            <Link href="/bus/manage" className="btn btn-ghost btn-xs w-full gap-1">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
-                <path d="M4.5 2A2.5 2.5 0 002 4.5v2.882c0 .663.263 1.3.732 1.768L7.5 13.88V17.5a1 1 0 001 1h3a1 1 0 001-1v-3.62l4.768-4.73c.469-.468.732-1.105.732-1.768V4.5A2.5 2.5 0 0015.5 2h-11z" />
-              </svg>
-              Manage Assignments
-            </Link>
           </div>
+
+          {driver.busDisplayId && (
+            <div className="rounded-box bg-base-100 p-4 shadow-card">
+              <h2 className="t-label font-semibold mb-3">Current Fleet</h2>
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center gap-3 rounded-lg bg-primary/5 p-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <Bus size={20} />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-semibold text-sm">{driver.busDisplayId}</div>
+                    {driver.routeName && (
+                      <div className="text-xs text-base-content/50 truncate">{driver.routeName}</div>
+                    )}
+                  </div>
+                </div>
+                <Link
+                  href={`/bus/${driver.busId ?? driver.busDisplayId}`}
+                  className="btn btn-outline btn-sm w-full gap-1.5"
+                >
+                  <Bus size={14} />
+                  Open Bus
+                </Link>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

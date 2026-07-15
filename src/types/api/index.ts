@@ -11,11 +11,3 @@ export interface ErrorResponse<T> {
   message: string | null;
   error: string | null;
 }
-
-export interface PaginatedResponse<T> {
-  data: { items: T[] };
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-}

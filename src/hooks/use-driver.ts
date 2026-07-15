@@ -1,39 +1,37 @@
-import { useQuery, useInfiniteQuery } from "@tanstack/react-query"
-import { listDrivers, getDriverById } from "@/services/driver-service"
-import { getBusManagement } from "@/services/bus-management-service"
-import { listBuses } from "@/services/bus-service"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { listDrivers, getDriverById, updateDriver } from "@/services/driver-service"
 import type { DriverListParams } from "@/types/api/driver"
+import type { DriverUpdateRequest } from "@/types/models/driver"
+import { toast } from "sonner"
 
 const useDriver = () => {
-  const useDrivers = (params: Omit<DriverListParams, "page">) =>
-    useInfiniteQuery({
+  const qc = useQueryClient()
+
+  const useDrivers = (params?: DriverListParams) =>
+    useQuery({
       queryKey: ["drivers", params],
-      queryFn: ({ pageParam }) => listDrivers({ ...params, page: pageParam }),
-      initialPageParam: 1,
-      getNextPageParam: (lastPage) =>
-        lastPage.page < lastPage.totalPages ? lastPage.page + 1 : undefined,
+      queryFn: () => listDrivers(params),
     })
 
-  const useDriverDetail = (id: string) =>
+  const useDriverDetail = (id?: number | string) =>
     useQuery({
-      queryKey: ["driver", id],
-      queryFn: () => getDriverById(id),
+      queryKey: ["driver", id ?? "none"],
+      queryFn: () => getDriverById(id!),
       enabled: !!id,
     })
 
-  const useBusAssignments = () =>
-    useQuery({
-      queryKey: ["bus-assignments"],
-      queryFn: () => getBusManagement(),
+  const useUpdateDriver = () =>
+    useMutation({
+      mutationFn: ({ id, data }: { id: number | string; data: DriverUpdateRequest }) =>
+        updateDriver(id, data),
+      onSuccess: () => {
+        qc.invalidateQueries({ queryKey: ["drivers"] })
+        toast.success("Driver updated")
+      },
+      onError: () => toast.error("Failed to update driver"),
     })
 
-  const useAllBuses = () =>
-    useQuery({
-      queryKey: ["buses-summary"],
-      queryFn: () => listBuses({ search: "", status: "ongoing" }),
-    })
-
-  return { useDrivers, useDriverDetail, useBusAssignments, useAllBuses }
+  return { useDrivers, useDriverDetail, useUpdateDriver }
 }
 
 export default useDriver

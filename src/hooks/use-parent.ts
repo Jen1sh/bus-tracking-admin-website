@@ -1,41 +1,35 @@
-import { useQuery, useMutation, useInfiniteQuery, useQueryClient } from "@tanstack/react-query"
-import { listParents, getParentById, addParent, updateParent, deleteParent } from "@/services/parent-service"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import {
+  listParents,
+  getParentById,
+  updateParent,
+  revokeParentAccess,
+  resendParentInvite,
+} from "@/services/parent-service"
 import type { ParentListParams } from "@/types/api/parent"
-import type { ParentUserRequest } from "@/types/models/parent"
+import type { ParentUpdateRequest } from "@/types/models/parent"
 import { toast } from "sonner"
 
 const useParent = () => {
   const qc = useQueryClient()
 
-  const useParentList = (params: Omit<ParentListParams, "page">) =>
-    useInfiniteQuery({
+  const useParentList = (params?: ParentListParams) =>
+    useQuery({
       queryKey: ["parents", params],
-      queryFn: ({ pageParam }) => listParents({ ...params, page: pageParam }),
-      initialPageParam: 1,
-      getNextPageParam: (lastPage) =>
-        lastPage.page < lastPage.totalPages ? lastPage.page + 1 : undefined,
+      queryFn: () => listParents(params),
     })
 
-  const useParentDetail = (id?: string) =>
+  const useParentDetail = (id?: number | string) =>
     useQuery({
       queryKey: ["parent", id ?? "none"],
       queryFn: () => getParentById(id!),
       enabled: !!id,
     })
 
-  const useCreateParent = () =>
-    useMutation({
-      mutationFn: (data: ParentUserRequest) => addParent(data),
-      onSuccess: () => {
-        qc.invalidateQueries({ queryKey: ["parents"] })
-        toast.success("Parent created")
-      },
-      onError: () => toast.error("Failed to create parent"),
-    })
-
   const useUpdateParent = () =>
     useMutation({
-      mutationFn: ({ id, data }: { id: string; data: ParentUserRequest }) => updateParent(id, data),
+      mutationFn: ({ id, data }: { id: number | string; data: ParentUpdateRequest }) =>
+        updateParent(id, data),
       onSuccess: () => {
         qc.invalidateQueries({ queryKey: ["parents"] })
         toast.success("Parent updated")
@@ -43,17 +37,32 @@ const useParent = () => {
       onError: () => toast.error("Failed to update parent"),
     })
 
-  const useDeleteParent = () =>
+  const useRevokeAccess = () =>
     useMutation({
-      mutationFn: (id: string) => deleteParent(id),
+      mutationFn: (id: number | string) => revokeParentAccess(id),
       onSuccess: () => {
         qc.invalidateQueries({ queryKey: ["parents"] })
-        toast.success("Parent deleted")
+        toast.success("Parent access revoked")
       },
-      onError: () => toast.error("Failed to delete parent"),
+      onError: () => toast.error("Failed to revoke access"),
     })
 
-  return { useParentList, useParentDetail, useCreateParent, useUpdateParent, useDeleteParent }
+  const useResendInvite = () =>
+    useMutation({
+      mutationFn: (id: number | string) => resendParentInvite(id),
+      onSuccess: () => {
+        toast.success("Invite resent")
+      },
+      onError: () => toast.error("Failed to resend invite"),
+    })
+
+  return {
+    useParentList,
+    useParentDetail,
+    useUpdateParent,
+    useRevokeAccess,
+    useResendInvite,
+  }
 }
 
 export default useParent

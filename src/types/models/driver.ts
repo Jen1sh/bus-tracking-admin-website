@@ -1,19 +1,28 @@
-export interface DriverUserRequest {
-  name: string;
-  email: string;
-  password: string;
-  phone?: string;
-  schoolId: number;
-  accountStatus?: string;
-}
+import { DriverStatus } from '@/types/enums';
 
-export interface DriverUserResponse {
+export interface DriverSummaryResponse {
   id: number;
   name: string;
-  email: string;
-  role: string;
-  accountStatus: string;
   phone: string;
-  schoolId: number | null;
-  createdAt: string;
+  license: string;
+  busDisplayId: string | null;
+  status: string;
+  joined: string;
+}
+
+export interface DriverDetailResponse {
+  id: number;
+  name: string;
+  phone: string;
+  license: string;
+  status: string;
+  joined: string;
+  busId: number | null;
+  busDisplayId: string | null;
+  routeName: string | null;
+}
+
+export interface DriverUpdateRequest {
+  phone?: string;
+  status?: DriverStatus;
 }

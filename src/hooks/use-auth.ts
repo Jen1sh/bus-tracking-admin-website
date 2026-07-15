@@ -1,5 +1,5 @@
 import { loginUser } from "@/services/auth-service";
-import type { LoginRequest } from "@/types/models/bus";
+import type { LoginRequest } from "@/types/models/auth";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";

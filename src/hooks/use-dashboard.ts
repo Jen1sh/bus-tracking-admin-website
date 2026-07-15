@@ -1,32 +1,26 @@
-import { useQuery } from "@tanstack/react-query";
-import {
-  getDashboardStats,
-  getActiveBuses,
-  getBusLocation,
-} from "@/services/dashboard-service";
+import { useQuery } from "@tanstack/react-query"
+import { getDashboardStats, getLiveBuses, getRoutes } from "@/services/dashboard-service"
 
 const useDashboard = () => {
   const useDashboardStats = () =>
     useQuery({
       queryKey: ["dashboard-stats"],
       queryFn: getDashboardStats,
-    });
+    })
 
-  const useActiveBuses = () =>
+  const useLiveBuses = () =>
     useQuery({
-      queryKey: ["active-buses"],
-      queryFn: getActiveBuses,
-    });
+      queryKey: ["live-buses"],
+      queryFn: getLiveBuses,
+    })
 
-  const useBusLocation = (busId?: string) =>
+  const useRoutes = () =>
     useQuery({
-      queryKey: ["bus-location", busId ?? "none"],
-      queryFn: () => getBusLocation(busId!),
-      enabled: !!busId,
-      refetchInterval: 2500,
-    });
+      queryKey: ["routes"],
+      queryFn: getRoutes,
+    })
 
-  return { useDashboardStats, useActiveBuses, useBusLocation };
-};
+  return { useDashboardStats, useLiveBuses, useRoutes }
+}
 
-export default useDashboard;
+export default useDashboard

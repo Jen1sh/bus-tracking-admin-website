@@ -1,9 +1,13 @@
 import { API_ENDPOINTS } from "@/constants/api-endpoints";
 import axiosClient from "@/lib/axios";
-import { APIResponse } from "@/types/api";
-import { DashboardStatsResponse } from "@/types/models/bus";
-import { ActiveBusResponse } from "@/types/models/active-bus";
-import { LocationResponse } from "@/types/models/location";
+import type { APIResponse } from "@/types/api";
+import type {
+  BusLiveResponse,
+  BusSummaryResponse,
+  DashboardStatsResponse,
+  RouteResponse,
+} from "@/types/models/bus";
+import type { BusListParams } from "@/types/api/bus";
 
 export const getDashboardStats = async () => {
   const res = await axiosClient.get<APIResponse<DashboardStatsResponse>>(
@@ -13,17 +17,26 @@ export const getDashboardStats = async () => {
   return res.data;
 };
 
-export const getActiveBuses = async () => {
-  const res = await axiosClient.get<APIResponse<ActiveBusResponse[]>>(
-    API_ENDPOINTS.DASHBOARD.ACTIVE_BUSES,
+export const getLiveBuses = async () => {
+  const res = await axiosClient.get<APIResponse<BusLiveResponse[]>>(
+    API_ENDPOINTS.BUS.LIVE,
   );
 
   return res.data;
 };
 
-export const getBusLocation = async (id: string) => {
-  const res = await axiosClient.get<APIResponse<LocationResponse>>(
-    API_ENDPOINTS.DASHBOARD.BUS_LOCATION(id),
+export const listBuses = async (params?: BusListParams) => {
+  const res = await axiosClient.get<APIResponse<BusSummaryResponse[]>>(
+    API_ENDPOINTS.BUS.BASE,
+    { params },
+  );
+
+  return res.data;
+};
+
+export const getRoutes = async () => {
+  const res = await axiosClient.get<APIResponse<RouteResponse[]>>(
+    API_ENDPOINTS.ROUTES,
   );
 
   return res.data;

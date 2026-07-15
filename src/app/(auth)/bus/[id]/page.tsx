@@ -2,31 +2,24 @@
 
 import { useParams } from "next/navigation"
 import Link from "next/link"
+import { ArrowLeft } from "lucide-react"
+import { Breadcrumbs } from "@/components/breadcrumbs"
+import { StatusBadge } from "@/components/status-badge"
 import useBus from "@/hooks/use-bus"
 
-const statusStyles: Record<string, { badge: string; dotColor: string }> = {
-  ongoing: { badge: "badge-success", dotColor: "bg-success" },
-  parked: { badge: "badge-ghost", dotColor: "bg-neutral/40" },
-  inactive: { badge: "badge-ghost", dotColor: "bg-neutral/40" },
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const s = status.toLowerCase()
-  const style = statusStyles[s] ?? { badge: "badge-ghost", dotColor: "bg-neutral/40" }
-  return (
-    <span className={`badge badge-sm gap-1.5 ${style.badge}`}>
-      <span className={`h-1.5 w-1.5 rounded-full ${style.dotColor}`} />
-      {status}
-    </span>
-  )
+const statusLabel: Record<string, string> = {
+  active: "Active",
+  inactive: "Inactive",
 }
 
 export default function BusDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const { useBusDetail } = useBus()
+  const { useBusDetail, useBusCheckpoints } = useBus()
 
   const { data, isLoading, error } = useBusDetail(id)
+  const { data: cpRes } = useBusCheckpoints(id)
   const bus = data?.data ?? null
+  const checkpoints = cpRes?.data ?? []
 
   if (isLoading) {
     return (
@@ -60,18 +53,18 @@ export default function BusDetailPage() {
   return (
     <div className="space-y-6">
       <Link href="/bus" className="inline-flex items-center gap-1 text-xs text-base-content/40 hover:text-base-content/70 transition-colors">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
-          <path fillRule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clipRule="evenodd" />
-        </svg>
+        <ArrowLeft size={14} />
         Back to Buses
       </Link>
+
+      <Breadcrumbs items={[{ label: "Dashboard", href: "/dashboard" }, { label: "Buses", href: "/bus" }, { label: bus.displayId }]} />
 
       <div className="rounded-box bg-base-100 p-4 shadow-card">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
               <h1 className="t-h1">{bus.displayId}</h1>
-              <StatusBadge status={bus.status} />
+              <StatusBadge status={bus.status} label={statusLabel[bus.status.toLowerCase()] ?? bus.status} />
             </div>
             <p className="t-body text-base-content/50 mt-0.5">{bus.plate}</p>
           </div>
@@ -121,16 +114,22 @@ export default function BusDetailPage() {
           ) : (
             <p className="text-sm text-base-content/40 py-4 text-center">No driver assigned.</p>
           )}
-          <div className="mt-3 pt-3 border-t border-base-200">
-            <Link href="/bus/manage" className="btn btn-ghost btn-xs w-full gap-1">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
-                <path d="M4.5 2A2.5 2.5 0 002 4.5v2.882c0 .663.263 1.3.732 1.768L7.5 13.88V17.5a1 1 0 001 1h3a1 1 0 001-1v-3.62l4.768-4.73c.469-.468.732-1.105.732-1.768V4.5A2.5 2.5 0 0015.5 2h-11z" />
-              </svg>
-              Manage Assignments
-            </Link>
-          </div>
         </div>
       </div>
+
+      {checkpoints.length > 0 && (
+        <div className="rounded-box bg-base-100 p-3 shadow-card">
+          <h2 className="t-label font-semibold mb-2">Checkpoints</h2>
+          <div className="space-y-1 text-sm">
+            {checkpoints.map((cp) => (
+              <div key={cp.id} className="flex items-center gap-2">
+                <span className="text-base-content/40">{cp.order + 1}.</span>
+                <span className="text-base-content">{cp.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="rounded-box bg-base-100 p-3 shadow-card">
         <h2 className="t-label font-semibold mb-2">
@@ -144,8 +143,9 @@ export default function BusDetailPage() {
                 <tr>
                   <th className="w-36">Name</th>
                   <th className="w-20">Grade</th>
-                  <th className="w-28">Stop</th>
-                  <th className="w-32">Guardian</th>
+                  <th className="w-28">Checkpoint</th>
+                  <th className="w-32">Parent</th>
+                  <th className="w-32">Phone</th>
                 </tr>
               </thead>
               <tbody>
@@ -153,8 +153,9 @@ export default function BusDetailPage() {
                   <tr key={s.id}>
                     <td className="font-medium text-sm">{s.name}</td>
                     <td className="text-sm text-base-content/60">{s.klass ?? "—"}</td>
-                    <td className="text-sm text-base-content/60">{s.stop ?? "—"}</td>
-                    <td className="text-sm text-base-content/60">{s.guardianPhone ?? "—"}</td>
+                    <td className="text-sm text-base-content/60">{s.checkpoint ?? "—"}</td>
+                    <td className="text-sm text-base-content/60">{s.parentName ?? "—"}</td>
+                    <td className="text-sm text-base-content/60">{s.phone ?? "—"}</td>
                   </tr>
                 ))}
               </tbody>

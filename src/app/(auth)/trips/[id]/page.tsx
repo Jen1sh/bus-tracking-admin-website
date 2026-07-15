@@ -2,46 +2,46 @@
 
 import { useParams } from "next/navigation"
 import Link from "next/link"
-import { useQuery } from "@tanstack/react-query"
+import { ArrowLeft } from "lucide-react"
+import { Breadcrumbs } from "@/components/breadcrumbs"
 import { StatusBadge } from "@/components/status-badge"
-import { getBusById } from "@/services/bus-service"
 import useTrip from "@/hooks/use-trip"
-import useDriver from "@/hooks/use-driver"
 
 const statusMap: Record<string, string> = {
   PENDING: "scheduled",
   ACTIVE: "in-progress",
   COMPLETED: "completed",
+  CANCELLED: "cancelled",
+}
+
+const statusLabel: Record<string, string> = {
+  PENDING: "Scheduled",
+  ACTIVE: "In Progress",
+  COMPLETED: "Completed",
+  CANCELLED: "Cancelled",
+}
+
+const attendanceLabel: Record<string, string> = {
+  ONBOARD: "On Board",
+  DROPPED: "Dropped",
+  ABSENT: "Absent",
+  NOT_TODAY: "Not Today",
+}
+
+const attendanceStyle: Record<string, string> = {
+  ONBOARD: "badge-success",
+  DROPPED: "badge-info",
+  ABSENT: "badge-error",
+  NOT_TODAY: "badge-ghost",
 }
 
 export default function TripDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const { useTripDetail } = useTrip()
-  const { useDrivers } = useDriver()
+  const { useTripDetail, useToggleCancelTrip } = useTrip()
+  const cancelMutation = useToggleCancelTrip()
 
   const { data: tripRes, isLoading, error } = useTripDetail(id)
-  const { data: driversRes } = useDrivers({
-    limit: 200,
-    search: "",
-    status: "ACTIVE",
-    sortBy: "name",
-    sortOrder: "asc",
-  })
-
   const trip = tripRes?.data ?? null
-
-  const driverId = trip ? String(trip.driverId) : undefined
-  const busId = trip ? String(trip.busId) : undefined
-
-  const { data: busRes } = useQuery({
-    queryKey: ["bus", busId],
-    queryFn: () => getBusById(busId!),
-    enabled: !!busId,
-  })
-
-  const drivers = driversRes?.pages.flatMap((p) => p.data.items) ?? []
-  const driver = drivers.find((d) => d.id === trip?.driverId)
-  const bus = busRes?.data ?? null
 
   if (isLoading) {
     return (
@@ -74,7 +74,8 @@ export default function TripDetailPage() {
 
   const badgeStatus = statusMap[trip.status] ?? "scheduled"
 
-  const formatTime = (iso: string) => {
+  const formatTime = (iso: string | null) => {
+    if (!iso) return "—"
     try {
       return new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true })
     } catch {
@@ -90,24 +91,44 @@ export default function TripDetailPage() {
     }
   }
 
+  const handleToggleCancel = () => {
+    if (!confirm("Are you sure you want to toggle the cancellation status of this trip?")) return
+    cancelMutation.mutate(trip.id)
+  }
+
   return (
     <div className="space-y-6">
       <Link href="/trips" className="inline-flex items-center gap-1 text-xs text-base-content/40 hover:text-base-content/70 transition-colors">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
-          <path fillRule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clipRule="evenodd" />
-        </svg>
+        <ArrowLeft size={14} />
         Back to Trips
       </Link>
+
+      <Breadcrumbs items={[{ label: "Dashboard", href: "/dashboard" }, { label: "Trips", href: "/trips" }, { label: `Trip #${trip.id}` }]} />
 
       <div className="rounded-box bg-base-100 p-4 shadow-card">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="t-h1">Trip #{trip.tripId}</h1>
-              <StatusBadge status={badgeStatus} />
+              <h1 className="t-h1">Trip #{trip.id}</h1>
+              <StatusBadge status={badgeStatus} label={statusLabel[trip.status] ?? trip.status} />
             </div>
             <p className="t-body text-base-content/50 mt-0.5">{formatDate(trip.date)}</p>
           </div>
+          {(trip.status === "PENDING" || trip.status === "ACTIVE" || trip.status === "CANCELLED") && (
+            <button
+              className={`btn btn-sm ${trip.status === "CANCELLED" ? "btn-success" : "btn-error"}`}
+              onClick={handleToggleCancel}
+              disabled={cancelMutation.isPending}
+            >
+              {cancelMutation.isPending ? (
+                <span className="loading loading-spinner loading-xs" />
+              ) : trip.status === "CANCELLED" ? (
+                "Restore Trip"
+              ) : (
+                "Cancel Trip"
+              )}
+            </button>
+          )}
         </div>
       </div>
 
@@ -117,88 +138,88 @@ export default function TripDetailPage() {
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-base-content/40">Status</span>
-              <span className="text-base-content capitalize">{trip.status.toLowerCase()}</span>
+              <span className="text-base-content">{statusLabel[trip.status] ?? trip.status}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-base-content/40">Date</span>
               <span className="text-base-content">{formatDate(trip.date)}</span>
             </div>
             <div className="flex justify-between">
+              <span className="text-base-content/40">Shift</span>
+              <span className="text-base-content">{trip.shift ?? "—"}</span>
+            </div>
+            <div className="flex justify-between">
               <span className="text-base-content/40">Start Time</span>
-              <span className="text-base-content">{formatTime(trip.startTime)}</span>
+              <span className="text-base-content">{formatTime(trip.start)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-base-content/40">End Time</span>
-              <span className="text-base-content">{trip.endTime ? formatTime(trip.endTime) : "—"}</span>
+              <span className="text-base-content">{formatTime(trip.end)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-base-content/40">On Time</span>
+              <span className="text-base-content">{trip.onTime === null ? "—" : trip.onTime ? "Yes" : "No"}</span>
             </div>
           </div>
         </div>
 
         <div className="rounded-box bg-base-100 p-3 shadow-card">
-          <h2 className="t-label font-semibold mb-2">Driver</h2>
-          {driver ? (
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-base-content/40">Name</span>
-                <Link href={`/driver/${driver.id}`} className="text-primary font-medium link link-hover">{driver.name}</Link>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-base-content/40">Email</span>
-                <span className="text-base-content">{driver.email}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-base-content/40">Phone</span>
-                <span className="text-base-content">{driver.phone ?? "—"}</span>
-              </div>
+          <h2 className="t-label font-semibold mb-2">Route Info</h2>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-base-content/40">Driver</span>
+              <span className="text-base-content font-medium">{trip.driverName ?? "—"}</span>
             </div>
-          ) : (
-            <p className="text-sm text-base-content/40 py-4 text-center">Driver info unavailable</p>
-          )}
-          <div className="mt-3 pt-3 border-t border-base-200">
-            <Link href={`/driver/${trip.driverId}`} className="btn btn-ghost btn-xs w-full gap-1">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
-                <path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z" />
-                <path fillRule="evenodd" d="M.664 10.59a1.651 1.651 0 010-1.186A10.004 10.004 0 0110 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0110 17c-4.257 0-7.893-2.66-9.336-6.41zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
-              </svg>
-              View Driver
-            </Link>
-          </div>
-        </div>
-
-        <div className="rounded-box bg-base-100 p-3 shadow-card">
-          <h2 className="t-label font-semibold mb-2">Bus</h2>
-          {bus ? (
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-base-content/40">Vehicle</span>
-                <Link href={`/bus/${bus.id}`} className="text-primary font-medium link link-hover">{bus.displayId}</Link>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-base-content/40">Plate</span>
-                <span className="text-base-content font-mono">{bus.plate}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-base-content/40">Capacity</span>
-                <span className="text-base-content">{bus.capacity ?? "—"}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-base-content/40">Route</span>
-                <span className="text-base-content text-right max-w-56">{bus.routeName ?? "—"}</span>
-              </div>
+            <div className="flex justify-between">
+              <span className="text-base-content/40">Route</span>
+              <span className="text-base-content">{trip.routeName ?? "—"}</span>
             </div>
-          ) : (
-            <p className="text-sm text-base-content/40 py-4 text-center">Bus info unavailable</p>
-          )}
-          <div className="mt-3 pt-3 border-t border-base-200">
-            <Link href={`/bus/${trip.busId}`} className="btn btn-ghost btn-xs w-full gap-1">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
-                <path d="M4.5 2A2.5 2.5 0 002 4.5v2.882c0 .663.263 1.3.732 1.768L7.5 13.88V17.5a1 1 0 001 1h3a1 1 0 001-1v-3.62l4.768-4.73c.469-.468.732-1.105.732-1.768V4.5A2.5 2.5 0 0015.5 2h-11z" />
-              </svg>
-              View Bus
-            </Link>
+            <div className="flex justify-between">
+              <span className="text-base-content/40">Bus</span>
+              <Link href={`/bus/${trip.busDisplayId}`} className="text-primary font-medium link link-hover">{trip.busDisplayId}</Link>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-base-content/40">Students</span>
+              <span className="text-base-content">{trip.studentCount}</span>
+            </div>
           </div>
         </div>
       </div>
+
+      {trip.roster && trip.roster.length > 0 && (
+        <div className="rounded-box bg-base-100 p-3 shadow-card">
+          <h2 className="t-label font-semibold mb-2">
+            Attendance Roster
+            <span className="badge badge-sm badge-ghost ml-1.5">{trip.roster.length}</span>
+          </h2>
+          <div className="overflow-x-auto">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th className="w-36">Name</th>
+                  <th className="w-20">Class</th>
+                  <th className="w-28">Checkpoint</th>
+                  <th className="w-24">Attendance</th>
+                </tr>
+              </thead>
+              <tbody>
+                {trip.roster.map((r) => (
+                  <tr key={r.studentId}>
+                    <td className="font-medium text-sm">{r.name}</td>
+                    <td className="text-sm text-base-content/60">{r.klass ?? "—"}</td>
+                    <td className="text-sm text-base-content/60">{r.checkpoint ?? "—"}</td>
+                    <td>
+                      <span className={`badge badge-sm ${attendanceStyle[r.attendanceStatus] ?? "badge-ghost"}`}>
+                        {attendanceLabel[r.attendanceStatus] ?? r.attendanceStatus}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

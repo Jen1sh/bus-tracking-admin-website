@@ -1,30 +1,27 @@
 import { TripStatus } from '@/types/enums';
 
-export interface CreateTripRequest {
-  busId: number;
-  driverId: number;
-  startTime: string;
-  dates: string[];
-}
-
-export interface UpdateTripRequest {
-  busId?: number;
-  driverId?: number;
-  startTime?: string;
-  date?: string;
-  status?: string;
-}
-
-export interface TripResponse {
-  tripId: number;
-  busId: number;
-  driverId: number;
-  startTime: string;
-  endTime: string | null;
-  status: TripStatus;
+export interface TripSummaryResponse {
+  id: number;
   date: string;
+  shift: string;
+  busDisplayId: string;
+  routeName: string;
+  driverName: string;
+  start: string | null;
+  end: string | null;
+  studentCount: number;
+  status: TripStatus;
+  onTime: boolean | null;
 }
 
-export interface BulkDeleteRequest {
-  ids: number[];
+export interface TripRosterEntryResponse {
+  studentId: number;
+  name: string;
+  klass: string | null;
+  checkpoint: string | null;
+  attendanceStatus: string;
 }
+
+export type TripDetailResponse = TripSummaryResponse & {
+  roster: TripRosterEntryResponse[];
+};

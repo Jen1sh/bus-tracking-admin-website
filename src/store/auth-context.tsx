@@ -1,15 +1,15 @@
 "use client"
 
 import { createContext, useContext, useCallback, useSyncExternalStore, type ReactNode } from "react"
-import type { User } from "@/types/models/user"
+import type { UserSummary } from "@/types/models/auth"
 
 interface AuthState {
-  user: User
+  user: UserSummary
   token: string
 }
 
 interface AuthContextValue {
-  user: User | null
+  user: UserSummary | null
   token: string | null
   isAuthenticated: boolean
   logout: () => Promise<void>

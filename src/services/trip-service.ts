@@ -1,51 +1,41 @@
 import { API_ENDPOINTS } from "@/constants/api-endpoints";
 import axiosClient from "@/lib/axios";
-import { APIResponse, PaginatedResponse } from "@/types/api";
-import { TripListParams } from "@/types/api/trip";
-import {
-  CreateTripRequest,
-  UpdateTripRequest,
-  TripResponse,
-  BulkDeleteRequest,
+import type { APIResponse } from "@/types/api";
+import type { TripListParams } from "@/types/api/trip";
+import type {
+  TripDetailResponse,
+  TripSummaryResponse,
 } from "@/types/models/trip";
 
-export const listTrips = async (params: TripListParams) => {
-  const res = await axiosClient.get<PaginatedResponse<TripResponse>>(
+export const listTrips = async (params?: TripListParams) => {
+  const res = await axiosClient.get<APIResponse<TripSummaryResponse[]>>(
     API_ENDPOINTS.TRIP.BASE,
-    { params }
+    { params },
   );
 
   return res.data;
 };
 
-export const getTripById = async (id: string) => {
-  const res = await axiosClient.get<APIResponse<TripResponse>>(
-    API_ENDPOINTS.TRIP.BY_ID(id)
+export const getTripById = async (id: number | string) => {
+  const res = await axiosClient.get<APIResponse<TripDetailResponse>>(
+    API_ENDPOINTS.TRIP.BY_ID(id),
   );
 
   return res.data;
 };
 
-export const createTrip = async (data: CreateTripRequest) => {
-  const res = await axiosClient.post(API_ENDPOINTS.TRIP.BASE, data);
+export const toggleCancelTrip = async (id: number | string) => {
+  const res = await axiosClient.post<APIResponse<TripDetailResponse>>(
+    API_ENDPOINTS.TRIP.CANCEL(id),
+  );
 
   return res.data;
 };
 
-export const updateTrip = async (id: string, data: UpdateTripRequest) => {
-  const res = await axiosClient.put(API_ENDPOINTS.TRIP.BY_ID(id), data);
-
-  return res.data;
-};
-
-export const deleteTrip = async (id: string) => {
-  const res = await axiosClient.delete(API_ENDPOINTS.TRIP.BY_ID(id));
-
-  return res.data;
-};
-
-export const bulkDeleteTrips = async (data: BulkDeleteRequest) => {
-  const res = await axiosClient.delete(API_ENDPOINTS.TRIP.BASE, { data });
+export const getActiveTripByBus = async (busId: number | string) => {
+  const res = await axiosClient.get<APIResponse<TripSummaryResponse | null>>(
+    API_ENDPOINTS.TRIP.ACTIVE_BY_BUS(busId),
+  );
 
   return res.data;
 };

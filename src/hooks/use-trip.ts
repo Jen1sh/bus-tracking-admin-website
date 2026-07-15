@@ -1,82 +1,51 @@
-import { useQuery, useMutation, useInfiniteQuery, useQueryClient } from "@tanstack/react-query"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import {
   listTrips,
   getTripById,
-  createTrip,
-  updateTrip,
-  deleteTrip,
-  bulkDeleteTrips,
+  toggleCancelTrip,
+  getActiveTripByBus,
 } from "@/services/trip-service"
 import type { TripListParams } from "@/types/api/trip"
-import type { CreateTripRequest, UpdateTripRequest, BulkDeleteRequest } from "@/types/models/trip"
 import { toast } from "sonner"
 
 const useTrip = () => {
   const qc = useQueryClient()
 
-  const useTripList = (params: Omit<TripListParams, "page">) =>
-    useInfiniteQuery({
+  const useTripList = (params?: TripListParams) =>
+    useQuery({
       queryKey: ["trips", params],
-      queryFn: ({ pageParam }) => listTrips({ ...params, page: pageParam }),
-      initialPageParam: 1,
-      getNextPageParam: (lastPage) =>
-        lastPage.page < lastPage.totalPages ? lastPage.page + 1 : undefined,
+      queryFn: () => listTrips(params),
     })
 
-  const useTripDetail = (id?: string) =>
+  const useTripDetail = (id?: number | string) =>
     useQuery({
       queryKey: ["trip", id ?? "none"],
       queryFn: () => getTripById(id!),
       enabled: !!id,
     })
 
-  const useCreateTrip = () =>
-    useMutation({
-      mutationFn: (data: CreateTripRequest) => createTrip(data),
-      onSuccess: () => {
-        qc.invalidateQueries({ queryKey: ["trips"] })
-        toast.success("Trip created")
-      },
-      onError: () => toast.error("Failed to create trip"),
+  const useActiveTripByBus = (busId?: number | string) =>
+    useQuery({
+      queryKey: ["active-trip", busId ?? "none"],
+      queryFn: () => getActiveTripByBus(busId!),
+      enabled: !!busId,
     })
 
-  const useUpdateTrip = () =>
+  const useToggleCancelTrip = () =>
     useMutation({
-      mutationFn: ({ id, data }: { id: string; data: UpdateTripRequest }) => updateTrip(id, data),
+      mutationFn: (id: number | string) => toggleCancelTrip(id),
       onSuccess: () => {
         qc.invalidateQueries({ queryKey: ["trips"] })
-        toast.success("Trip updated")
+        toast.success("Trip status toggled")
       },
-      onError: () => toast.error("Failed to update trip"),
-    })
-
-  const useDeleteTrip = () =>
-    useMutation({
-      mutationFn: (id: string) => deleteTrip(id),
-      onSuccess: () => {
-        qc.invalidateQueries({ queryKey: ["trips"] })
-        toast.success("Trip deleted")
-      },
-      onError: () => toast.error("Failed to delete trip"),
-    })
-
-  const useBulkDeleteTrips = () =>
-    useMutation({
-      mutationFn: (data: BulkDeleteRequest) => bulkDeleteTrips(data),
-      onSuccess: () => {
-        qc.invalidateQueries({ queryKey: ["trips"] })
-        toast.success("Trips deleted")
-      },
-      onError: () => toast.error("Failed to delete trips"),
+      onError: () => toast.error("Failed to toggle trip"),
     })
 
   return {
     useTripList,
     useTripDetail,
-    useCreateTrip,
-    useUpdateTrip,
-    useDeleteTrip,
-    useBulkDeleteTrips,
+    useActiveTripByBus,
+    useToggleCancelTrip,
   }
 }
 

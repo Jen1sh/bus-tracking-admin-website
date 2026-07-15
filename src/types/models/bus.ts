@@ -1,52 +1,4 @@
-import { Role, AccountStatus } from "@/types/enums";
 import { StudentResponse } from './student';
-
-// ─── Auth ────────────────────────────────────────────────────────────────────
-
-export interface LoginRequest {
-  email: string;
-  password: string;
-}
-
-export interface RegisterRequest {
-  name: string;
-  email: string;
-  password: string;
-  phone?: string;
-}
-
-export interface RefreshRequest {
-  refreshToken: string;
-}
-
-export interface UserSummary {
-  id: number;
-  name: string;
-  email: string;
-  role: Role;
-  schoolId: number | null;
-  status: AccountStatus;
-}
-
-export interface AuthResponse {
-  accessToken: string | null;
-  refreshToken: string | null;
-  expiresIn: number | null;
-  user: UserSummary | null;
-  message: string | null;
-}
-
-// ─── Super Admin ─────────────────────────────────────────────────────────────
-
-export interface CreateAdminRequest {
-  name: string;
-  email: string;
-  password: string;
-  phone?: string;
-  schoolId: number;
-}
-
-// ─── Admin Dashboard ─────────────────────────────────────────────────────────
 
 export interface DashboardStatsResponse {
   activeBuses: number;
@@ -58,8 +10,8 @@ export interface DashboardStatsResponse {
 export interface BusLiveResponse {
   busId: number;
   displayId: string;
-  latitude: number;
-  longitude: number;
+  latitude: number | null;
+  longitude: number | null;
   status: string;
   recordedAt: string;
 }
@@ -75,7 +27,26 @@ export interface BusSummaryResponse {
   status: string;
 }
 
-// ─── Admin Bus Management ────────────────────────────────────────────────────
+export interface RouteResponse {
+  id: number;
+  code: string;
+  name: string;
+  busId: number | null;
+  busCapacity: number | null;
+  stopCount: number;
+}
+
+export interface BusCreateRequest {
+  plate: string;
+  displayId?: string;
+  capacity?: number;
+  shift?: string;
+  status?: string;
+  driverName: string;
+  driverPhone: string;
+  routeName: string;
+  routeCode?: string;
+}
 
 export interface BusDetailResponse {
   id: number;
@@ -95,8 +66,6 @@ export interface BusUpdateRequest {
   capacity?: number | null;
   shift?: string | null;
   status?: string | null;
-  driverName?: string | null;
-  driverPhone?: string | null;
   routeCode?: string | null;
   routeName?: string | null;
 }
@@ -115,64 +84,12 @@ export interface PlateUpdateRequest {
   unlockToken: string;
 }
 
-// ─── Admin Fleet Import ──────────────────────────────────────────────────────
-
-export interface FleetImportRowResult {
-  rowNumber: number;
-  ok: boolean;
-  error: string | null;
-  busDisplayId: string | null;
-  plate: string | null;
-  capacity: number | null;
-  routeCode: string | null;
-  routeName: string | null;
-  driverName: string | null;
-  driverPhone: string | null;
-  shift: string | null;
-  stops: string[];
+export interface CheckpointResponse {
+  id: number;
+  label: string;
+  order: number;
 }
 
-export interface FleetImportPreviewResponse {
-  rows: FleetImportRowResult[];
-  okCount: number;
-  errorCount: number;
-}
-
-export interface FleetImportCommitRequest {
-  rows: FleetImportRowResult[];
-}
-
-export interface FleetImportCommitResponse {
-  importedCount: number;
-  skippedCount: number;
-}
-
-export interface FleetBulkEditRowResult {
-  rowNumber: number;
-  ok: boolean;
-  error: string | null;
-  busId: number | null;
-  busDisplayId: string | null;
-  capacity: number | null;
-  routeCode: string | null;
-  routeName: string | null;
-  driverName: string | null;
-  driverPhone: string | null;
-  shift: string | null;
-  stops: string[];
-}
-
-export interface FleetBulkEditPreviewResponse {
-  rows: FleetBulkEditRowResult[];
-  okCount: number;
-  errorCount: number;
-}
-
-export interface FleetBulkEditCommitRequest {
-  rows: FleetBulkEditRowResult[];
-}
-
-export interface FleetBulkEditCommitResponse {
-  updatedCount: number;
-  skippedCount: number;
+export interface CheckpointRequest {
+  checkpoints: { id?: number; label: string }[];
 }

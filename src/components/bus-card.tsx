@@ -1,3 +1,4 @@
+import { Bus } from "lucide-react"
 import { StatusBadge, type TripStatus } from "@/components/status-badge"
 
 interface BusCardProps {
@@ -18,9 +19,7 @@ export function BusCard({ busNumber, route, driver, capacity, status, compact }:
         <div
           className={`flex shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ${compact ? "h-8 w-8" : "h-10 w-10"}`}
         >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className={compact ? "h-4 w-4" : "h-5 w-5"}>
-            <path d="M10 8a3 3 0 100-6 3 3 0 000 6zM3.465 14.493a1.23 1.23 0 00.41 1.412A9.957 9.957 0 0010 18c2.31 0 4.438-.784 6.131-2.1.43-.333.604-.903.408-1.41a7.002 7.002 0 00-13.074.003z" />
-          </svg>
+          <Bus size={compact ? 16 : 20} />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2">
