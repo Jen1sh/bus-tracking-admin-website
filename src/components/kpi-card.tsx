@@ -14,7 +14,7 @@ interface KpiCardProps {
 export function KpiCard({ title, value, description, valueColor = "text-primary", icon, compact, trend, trendLabel }: KpiCardProps) {
   return (
     <div
-      className={`rounded-box bg-base-100 shadow-float ${compact ? "p-3" : "p-5"}`}
+      className={`rounded-box bg-base-100 ${compact ? "p-3" : "p-4"} ${compact ? "shadow-float" : "shadow-card"}`}
     >
       <div className="flex items-center justify-between">
         <div className="t-micro text-base-content/40">{title}</div>

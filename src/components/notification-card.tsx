@@ -21,7 +21,7 @@ export function NotificationCard({
 }: NotificationCardProps) {
   const cardClasses = flat
     ? "flex items-start"
-    : "flex items-start rounded-box bg-base-100 shadow-float"
+    : "flex items-start rounded-box bg-base-100 shadow-card"
   const spacingClasses = compact ? "gap-2 p-2.5" : "gap-3 p-4"
 
   return (

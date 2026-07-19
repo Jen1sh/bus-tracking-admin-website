@@ -7,7 +7,7 @@ interface BreadcrumbsProps {
 
 export function Breadcrumbs({ items }: BreadcrumbsProps) {
   return (
-    <nav className="flex items-center gap-1 text-xs text-base-content/40 mb-3">
+    <nav className="flex items-center gap-1 text-xs text-base-content/50 mb-3">
       {items.map((item, i) => (
         <span key={i} className="flex items-center gap-1">
           {i > 0 && <ChevronRight size={12} />}

@@ -70,9 +70,9 @@ export function Sidebar() {
                 <li key={item.href}>
                   <Link
                     href={item.href}
-                    className={`group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
+                    className={`group relative flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition-colors duration-200 ${
                       isActive
-                        ? "nav-active font-semibold"
+                        ? "nav-active font-semibold rounded-r-lg"
                         : "text-base-content/60 hover:bg-base-200 hover:text-base-content"
                     }`}
                   >

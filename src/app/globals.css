@@ -46,7 +46,7 @@
   --radius-box-sm: 0.5rem;
   --radius-box-md: 0.875rem;
   --radius-box-lg: 1.125rem;
-  --radius-box-xl: 1rem;
+  --radius-box-xl: 1.875rem;
 
   --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.06);
   --shadow-float: 0 4px 12px -2px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.06);
@@ -130,12 +130,6 @@
   }
 }
 
-@utility glass {
-  background: rgb(255 255 255 / 0.7);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgb(255 255 255 / 0.5);
-}
-
 @utility glow-primary {
   box-shadow: 0 0 16px rgb(26 86 160 / 0.3);
 }
@@ -155,6 +149,9 @@
 @utility nav-active {
   background: rgb(26 86 160 / 0.08);
   color: var(--color-primary);
+  border-left: 3px solid var(--color-primary);
+  padding-left: calc(0.75rem - 3px);
+  margin-left: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {

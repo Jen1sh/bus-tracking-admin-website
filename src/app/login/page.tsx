@@ -30,7 +30,7 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-base-200 px-4">
-      <div className="card w-full max-w-sm bg-base-100 shadow-xl">
+      <div className="card w-full max-w-sm bg-base-100 shadow-sheet">
         <div className="card-body items-center gap-6 py-12">
           <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary text-primary-content text-2xl font-bold shadow-sm">
             B

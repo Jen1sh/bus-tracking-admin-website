@@ -44,7 +44,7 @@ function LoadingCards() {
   return (
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
       {[1, 2, 3, 4].map((i) => (
-        <div key={i} className="rounded-box bg-base-100 p-3 shadow-float">
+        <div key={i} className="rounded-box bg-base-100 p-4 shadow-card">
           <SkeletonBlock className="mb-2 h-3 w-16" />
           <SkeletonBlock className="mb-1 h-7 w-20" />
           <SkeletonBlock className="h-3 w-24" />
@@ -58,7 +58,7 @@ function LoadingRightColumn() {
   return (
     <div className="flex flex-col gap-4">
       {[1, 2, 3].map((i) => (
-        <div key={i} className="rounded-box bg-base-100 p-3 shadow-float">
+        <div key={i} className="rounded-box bg-base-100 p-4 shadow-card">
           <SkeletonBlock className="mb-3 h-4 w-28" />
           <div className="space-y-2">
             <SkeletonBlock className="h-10 w-full" />
@@ -97,7 +97,7 @@ export default function DashboardPage() {
         <>
           <LoadingCards />
           <div className="grid gap-4 lg:grid-cols-2 items-start">
-            <div className="rounded-box bg-base-100 p-3 shadow-float">
+            <div className="rounded-box bg-base-100 p-4 shadow-card">
               <SkeletonBlock className="mb-2 h-4 w-16" />
               <SkeletonBlock className="h-[400px] w-full" />
             </div>
@@ -141,7 +141,7 @@ export default function DashboardPage() {
             <DashboardMap buses={liveBuses} />
 
             <div className="flex flex-col gap-4">
-              <div className="rounded-box bg-base-100 shadow-float">
+              <div className="rounded-box bg-base-100 shadow-card">
                 <div className="border-b border-base-200 px-3 py-2.5">
                   <h2 className="t-label font-semibold">Recent Activity</h2>
                 </div>
@@ -161,7 +161,7 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              <div className="rounded-box bg-base-100 shadow-float">
+              <div className="rounded-box bg-base-100 shadow-card">
                 <div className="border-b border-base-200 px-3 py-2.5">
                   <h2 className="t-label font-semibold">Live Buses</h2>
                 </div>
@@ -196,7 +196,7 @@ export default function DashboardPage() {
                 )}
               </div>
 
-              <div className="rounded-box bg-base-100 shadow-float">
+              <div className="rounded-box bg-base-100 shadow-card">
                 <div className="border-b border-base-200 px-3 py-2.5">
                   <h2 className="t-label font-semibold">Alerts</h2>
                 </div>
